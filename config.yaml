@@ -1,0 +1,8 @@
+templateDir: go-gin-template
+additionalProperties:
+  apiPath: codegen
+files:
+  api-impl.mustache:
+    folder: endpoints
+    templateType: API
+    destinationFilename: _impl.go

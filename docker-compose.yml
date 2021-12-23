@@ -1,0 +1,11 @@
+version: '3.4'
+
+services:
+  goport:
+    build: .
+    image: goport:latest
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/Users/maxvissing/compose:/Users/maxvissing/compose"
+    ports: 
+      - 9212:9212

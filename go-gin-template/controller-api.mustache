@@ -1,0 +1,39 @@
+{{>partial_header}}
+package {{packageName}}
+
+{{#operations}}
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/docker/docker/errdefs"
+){{#operation}}
+{{#allParams.0}}
+
+type {{#lambda.titlecase}}{{nickname}}{{/lambda.titlecase}}Opts struct { {{#pathParams}}
+    {{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}} {{dataType}} `uri:"{{paramName}}{{#defaultValue}},default={{defaultValue}}{{/defaultValue}}"{{#required}} binding:"required"{{/required}}` {{/pathParams}}{{#bodyParams}}
+    {{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}} {{dataType}} `json:"{{paramName}}{{#defaultValue}},default={{defaultValue}}{{/defaultValue}}"{{#required}} binding:"required"{{/required}}` {{/bodyParams}}{{#queryParams}}
+    {{#lambda.titlecase}}{{paramName}}{{/lambda.titlecase}} {{dataType}} `form:"{{paramName}}{{#defaultValue}},default={{defaultValue}}{{/defaultValue}}"{{#required}} binding:"required"{{/required}}` {{/queryParams}}
+}{{/allParams.0}}
+
+// {{nickname}} - {{{summary}}}
+{{#isDeprecated}}
+// Deprecated
+{{/isDeprecated}}
+func {{nickname}}Handler(c *gin.Context) { {{#allParams.0}}
+    var opts {{#lambda.titlecase}}{{nickname}}{{/lambda.titlecase}}Opts
+    if err := c.ShouldBind(&opts); err != nil {
+        c.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
+        return
+    }{{/allParams.0}}
+    response, err := {{nickname}}(c{{#allParams.0}}, &opts{{/allParams.0}})
+    if err != nil {
+        code := errdefs.GetHTTPErrorStatusCode(err)
+        c.JSON(code, err.Error())
+        return
+    }{{#responses}}{{#is2xx}}
+    if response{{#dataType}} != nil{{/dataType}} {
+        {{#isBinary}}c.Stream(response){{/isBinary}}{{^isBinary}}c.JSON({{code}}, {{#dataType}}response{{/dataType}}{{^dataType}}gin.H{}{{/dataType}}){{/isBinary}}
+        return
+    }{{/is2xx}}{{/responses}}
+}{{/operation}}{{/operations}}

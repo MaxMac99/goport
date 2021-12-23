@@ -1,0 +1,18 @@
+{{>partial_header}}
+package {{packageName}}
+
+{{#operations}}
+import (
+    "github.com/pkg/errors"
+	"github.com/gin-gonic/gin"
+	"github.com/docker/docker/errdefs"
+){{#operation}}
+
+// {{nickname}} - {{{summary}}}
+{{#isDeprecated}}
+// Deprecated
+{{/isDeprecated}}
+func {{nickname}}(c *gin.Context{{#allParams.0}}, opts *{{#lambda.titlecase}}{{nickname}}{{/lambda.titlecase}}Opts{{/allParams.0}}) ({{#responses}}{{#is2xx}}{{#isBinary}}func(w io.Writer) bool{{/isBinary}}{{^isBinary}}{{#dataType}}*{{dataType}}{{/dataType}}{{^dataType}}bool{{/dataType}}{{/isBinary}}{{/is2xx}}{{/responses}}, error) {
+    // TODO: Implement this method
+    return {{#responses}}{{#is2xx}}{{#dataType}}nil{{/dataType}}{{^dataType}}false{{/dataType}}{{/is2xx}}{{/responses}}, errdefs.NotImplemented(errors.New("The Method '{{nickname}}' is not implemented yet."))
+}{{/operation}}{{/operations}}
