@@ -7,9 +7,9 @@ import (
 	"github.com/compose-spec/compose-go/types"
 	"github.com/containerd/console"
 	"github.com/docker/docker/client"
-	"github.com/maxmac99/goport/goport"
 	"gitlab.com/maxmac99/compose/pkg/api"
 	"gitlab.com/maxmac99/compose/pkg/compose"
+	"gitlab.com/maxmac99/goport/goport"
 )
 
 type ProjectService interface {

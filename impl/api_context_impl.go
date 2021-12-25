@@ -11,9 +11,9 @@ package impl
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/maxmac99/goport/context"
-	"github.com/maxmac99/goport/goport"
-	"github.com/maxmac99/goport/models"
+	"gitlab.com/maxmac99/goport/context"
+	"gitlab.com/maxmac99/goport/goport"
+	"gitlab.com/maxmac99/goport/models"
 )
 
 // ContextCreate - Create a context

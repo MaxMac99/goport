@@ -12,8 +12,8 @@ package impl
 import (
 	"github.com/docker/docker/api/types"
 	"github.com/gin-gonic/gin"
-	"github.com/maxmac99/goport/controllers"
-	"github.com/maxmac99/goport/models"
+	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/models"
 )
 
 // ContainerExec - Create an exec instance

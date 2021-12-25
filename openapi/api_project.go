@@ -15,8 +15,8 @@ import (
 
 	"github.com/docker/docker/errdefs"
 	"github.com/gin-gonic/gin"
-	"github.com/maxmac99/goport/impl"
-	"github.com/maxmac99/goport/models"
+	"gitlab.com/maxmac99/goport/impl"
+	"gitlab.com/maxmac99/goport/models"
 )
 
 // ProjectBuild - Build the project

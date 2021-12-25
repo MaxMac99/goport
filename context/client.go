@@ -4,7 +4,7 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/context/docker"
 	"github.com/docker/docker/client"
-	"github.com/maxmac99/goport/goport"
+	"gitlab.com/maxmac99/goport/goport"
 )
 
 func GetClientForContext(server goport.GoPort, context string) (client.APIClient, error) {

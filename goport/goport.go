@@ -2,6 +2,7 @@ package goport
 
 import (
 	"io"
+	"log"
 	"sync"
 
 	"github.com/docker/cli/cli/command"
@@ -86,5 +87,7 @@ func GetGoPort() *GoPortServer {
 			},
 		}
 	})
+
+	log.Printf("Config File: " + goPort.ConfigFile().Filename)
 	return goPort
 }

@@ -19,8 +19,8 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
-	"github.com/maxmac99/goport/controllers"
-	"github.com/maxmac99/goport/models"
+	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/models"
 )
 
 // SystemDataUsage - Get data usage information

@@ -2,7 +2,7 @@ package context
 
 import (
 	"github.com/docker/cli/cli/context/store"
-	"github.com/maxmac99/goport/goport"
+	"gitlab.com/maxmac99/goport/goport"
 )
 
 func InspectContext(server goport.GoPort, name string) (*Context, error) {

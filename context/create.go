@@ -4,8 +4,8 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/context/docker"
 	"github.com/docker/cli/cli/context/store"
-	"github.com/maxmac99/goport/goport"
 	"github.com/pkg/errors"
+	"gitlab.com/maxmac99/goport/goport"
 )
 
 type CreateOptions struct {

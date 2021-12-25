@@ -11,9 +11,9 @@ import (
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
-	"github.com/maxmac99/goport/context"
-	"github.com/maxmac99/goport/goport"
 	"github.com/moby/term"
+	"gitlab.com/maxmac99/goport/context"
+	"gitlab.com/maxmac99/goport/goport"
 )
 
 func ResolveContext(currentContext string) (client.APIClient, error) {

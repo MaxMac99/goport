@@ -6,6 +6,9 @@ services:
     image: goport:latest
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "/Users/maxvissing/compose:/Users/maxvissing/compose"
+      - "/home/pi/.docker/contexts:/.docker/contexts"
+      - "/home/pi/compose:/home/pi/compose"
+    environment:
+      - GOPORT_PROJECTS_BASE_DIR=/home/pi/compose
     ports: 
       - 9212:9212

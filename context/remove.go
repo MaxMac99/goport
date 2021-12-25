@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/maxmac99/goport/goport"
 	"github.com/pkg/errors"
+	"gitlab.com/maxmac99/goport/goport"
 )
 
 func RemoveContext(server goport.GoPort, name string, force bool) error {

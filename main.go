@@ -12,7 +12,7 @@ package main
 import (
 	"log"
 
-	sw "github.com/maxmac99/goport/openapi"
+	sw "gitlab.com/maxmac99/goport/openapi"
 )
 
 func main() {

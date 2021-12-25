@@ -17,8 +17,8 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
-	"github.com/maxmac99/goport/controllers"
-	"github.com/maxmac99/goport/models"
+	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/models"
 )
 
 // NetworkConnect - Connect a container to a network

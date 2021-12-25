@@ -19,11 +19,11 @@ import (
 
 	"github.com/compose-spec/compose-go/types"
 	"github.com/gin-gonic/gin"
-	"github.com/maxmac99/goport/controllers"
-	"github.com/maxmac99/goport/models"
-	"github.com/maxmac99/goport/project"
 	"github.com/pkg/errors"
 	"gitlab.com/maxmac99/compose/pkg/api"
+	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/models"
+	"gitlab.com/maxmac99/goport/project"
 )
 
 // ProjectBuild - Build the project
