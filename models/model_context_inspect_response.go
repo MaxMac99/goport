@@ -14,10 +14,13 @@ type ContextInspectResponse struct {
 	// The name of the context
 	Name string `json:"Name,omitempty"`
 
+	// The metadata of the context
 	Metadata interface{} `json:"Metadata,omitempty"`
 
+	// The endpoint configuration of the context
 	Endpoints map[string]interface{} `json:"Endpoints,omitempty"`
 
+	// The materials for the TLS configuration of the endpoints
 	TLSMaterial map[string][]string `json:"TLSMaterial,omitempty"`
 
 	Storage ContextInspectResponseStorage `json:"Storage,omitempty"`

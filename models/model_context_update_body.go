@@ -9,20 +9,12 @@
 
 package models
 
-type ContextSummary struct {
+// ContextUpdateBody - Configuration for a context that is portable between hosts
+type ContextUpdateBody struct {
 
-	// The names that this context has been given 
-	Name string `json:"Name,omitempty"`
-
-	// The description of the context 
+	// A description of the context. 
 	Description string `json:"Description,omitempty"`
 
-	// The docker endpoint of the context 
-	Docker string `json:"Docker,omitempty"`
-
-	// The kubernetes endpoint of the context 
-	Kubernetes *string `json:"Kubernetes,omitempty"`
-
-	// The orchestrator of the context 
-	Orchestrator string `json:"Orchestrator,omitempty"`
+	// The configuration for the docker endpoint. 
+	Docker map[string]string `json:"Docker,omitempty"`
 }

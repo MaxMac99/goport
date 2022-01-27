@@ -10,7 +10,7 @@
 package models
 
 type ProjectRunOpts struct {
-	InlineObject6
+	ProjectRunBody
 	Name       string `uri:"name" binding:"required"`
 	Service    string `uri:"service" binding:"required"`
 	Context    string `form:"context"`

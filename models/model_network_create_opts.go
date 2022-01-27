@@ -10,6 +10,6 @@
 package models
 
 type NetworkCreateOpts struct {
-	InlineObject2
+	NetworkCreateBody
 	Context string `form:"context"`
 }

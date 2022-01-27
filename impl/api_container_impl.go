@@ -196,7 +196,7 @@ func ContainerPause(c *gin.Context, opts *models.ContainerPauseOpts) error {
 }
 
 // ContainerPrune - Delete stopped containers
-func ContainerPrune(c *gin.Context, opts *models.ContainerPruneOpts) (*map[string]models.ContainerPruneResponse, error) {
+func ContainerPrune(c *gin.Context, opts *models.ContainerPruneOpts) (*map[string]models.ContainerPruneResponseItem, error) {
 	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
@@ -206,7 +206,7 @@ func ContainerPrune(c *gin.Context, opts *models.ContainerPruneOpts) (*map[strin
 		return nil, err
 	}
 
-	response := make(map[string]models.ContainerPruneResponse, len(clients))
+	response := make(map[string]models.ContainerPruneResponseItem, len(clients))
 	var mutex sync.RWMutex
 	var wg sync.WaitGroup
 	wg.Add(len(clients))
@@ -218,9 +218,9 @@ func ContainerPrune(c *gin.Context, opts *models.ContainerPruneOpts) (*map[strin
 				return
 			}
 			mutex.Lock()
-			response[context] = models.ContainerPruneResponse{
+			response[context] = models.ContainerPruneResponseItem{
 				ContainersDeleted: prune.ContainersDeleted,
-				SpaceReclaimed:    int64(prune.SpaceReclaimed),
+				SpaceReclaimed:    prune.SpaceReclaimed,
 			}
 			mutex.Unlock()
 			wg.Done()

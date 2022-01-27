@@ -10,7 +10,7 @@
 package models
 
 type ContainerExecOpts struct {
-	InlineObject
+	ContainerExecBody
 	Id      string `uri:"id" binding:"required"`
 	Context string `form:"context"`
 }

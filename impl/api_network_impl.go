@@ -174,7 +174,7 @@ func NetworkList(c *gin.Context, opts *models.NetworkListOpts) (*map[string][]mo
 }
 
 // NetworkPrune - Delete unused networks
-func NetworkPrune(c *gin.Context, opts *models.NetworkPruneOpts) (*map[string]models.NetworkPruneResponse, error) {
+func NetworkPrune(c *gin.Context, opts *models.NetworkPruneOpts) (*map[string]models.NetworkPruneResponseItem, error) {
 	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func NetworkPrune(c *gin.Context, opts *models.NetworkPruneOpts) (*map[string]mo
 	if err != nil {
 		return nil, err
 	}
-	response := make(map[string]models.NetworkPruneResponse, len(clients))
+	response := make(map[string]models.NetworkPruneResponseItem, len(clients))
 	var mutex sync.RWMutex
 	var wg sync.WaitGroup
 	wg.Add(len(clients))
@@ -195,7 +195,7 @@ func NetworkPrune(c *gin.Context, opts *models.NetworkPruneOpts) (*map[string]mo
 				return
 			}
 			mutex.Lock()
-			response[context] = models.NetworkPruneResponse{
+			response[context] = models.NetworkPruneResponseItem{
 				NetworksDeleted: pruneResponse.NetworksDeleted,
 			}
 			mutex.Unlock()

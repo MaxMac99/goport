@@ -9,20 +9,8 @@
 
 package models
 
-type ContextSummary struct {
+type NetworkPruneResponseItem struct {
 
-	// The names that this context has been given 
-	Name string `json:"Name,omitempty"`
-
-	// The description of the context 
-	Description string `json:"Description,omitempty"`
-
-	// The docker endpoint of the context 
-	Docker string `json:"Docker,omitempty"`
-
-	// The kubernetes endpoint of the context 
-	Kubernetes *string `json:"Kubernetes,omitempty"`
-
-	// The orchestrator of the context 
-	Orchestrator string `json:"Orchestrator,omitempty"`
+	// Networks that were deleted
+	NetworksDeleted []string `json:"NetworksDeleted,omitempty"`
 }

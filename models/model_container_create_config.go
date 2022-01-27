@@ -31,7 +31,7 @@ type ContainerCreateConfig struct {
 	AttachStderr bool `json:"AttachStderr,omitempty"`
 
 	// An object mapping ports to an empty object in the form:  `{\"<port>/<tcp|udp|sctp>\": {}}`
-	ExposedPorts map[string]map[string]interface{} `json:"ExposedPorts,omitempty"`
+	ExposedPorts map[string]interface{} `json:"ExposedPorts,omitempty"`
 
 	// Attach standard streams to a TTY, including `stdin` if it is not closed.
 	Tty bool `json:"Tty,omitempty"`
@@ -57,7 +57,7 @@ type ContainerCreateConfig struct {
 	Image string `json:"Image,omitempty"`
 
 	// An object mapping mount point paths inside the container to empty objects.
-	Volumes map[string]map[string]interface{} `json:"Volumes,omitempty"`
+	Volumes map[string]interface{} `json:"Volumes,omitempty"`
 
 	// The working directory for commands to run in.
 	WorkingDir string `json:"WorkingDir,omitempty"`

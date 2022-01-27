@@ -9,12 +9,14 @@
 
 package models
 
-// InlineObject5 - Configuration for a context that is portable between hosts
-type InlineObject5 struct {
+type ProjectImageResponseItem struct {
+	ID string `json:"ID,omitempty"`
 
-	// A description of the context.
-	Description string `json:"Description,omitempty"`
+	ContainerName string `json:"ContainerName,omitempty"`
 
-	// The host for the docker endpoint.
-	Docker map[string]string `json:"Docker,omitempty"`
+	Repository string `json:"Repository,omitempty"`
+
+	Tag string `json:"Tag,omitempty"`
+
+	Size int64 `json:"Size,omitempty"`
 }

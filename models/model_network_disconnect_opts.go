@@ -10,7 +10,7 @@
 package models
 
 type NetworkDisconnectOpts struct {
-	InlineObject4
+	NetworkDisconnectBody
 	Id      string `uri:"id" binding:"required"`
 	Context string `form:"context"`
 }

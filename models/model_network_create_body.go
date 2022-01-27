@@ -9,7 +9,7 @@
 
 package models
 
-type InlineObject2 struct {
+type NetworkCreateBody struct {
 
 	// The network's name.
 	Name string `json:"Name"`

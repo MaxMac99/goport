@@ -11,9 +11,11 @@ package models
 
 // ProjectTopResponse - OK response to ProjectTop operation
 type ProjectTopResponse struct {
-	Id string `json:"ID"`
 
-	Name string `json:"Name"`
+	// The ids
+	Id string `json:"ID,omitempty"`
+
+	Name string `json:"Name,omitempty"`
 
 	// The ps column titles
 	Titles []string `json:"Titles,omitempty"`

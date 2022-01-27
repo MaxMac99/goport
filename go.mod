@@ -21,6 +21,6 @@ require (
 	github.com/theupdateframework/notary v0.7.0 // indirect
 	github.com/ugorji/go v1.2.6 // indirect
 	gitlab.com/maxmac99/compose v0.0.0-20220125205422-308942cacf8b
-	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
+	golang.org/x/crypto v0.0.0-20220126234351-aa10faf2a1f8 // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 )

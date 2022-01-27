@@ -108,7 +108,7 @@ func VolumeList(c *gin.Context, opts *models.VolumeListOpts) (*map[string]models
 }
 
 // VolumePrune - Delete unused volumes
-func VolumePrune(c *gin.Context, opts *models.VolumePruneOpts) (*map[string]models.VolumePruneResponse, error) {
+func VolumePrune(c *gin.Context, opts *models.VolumePruneOpts) (*map[string]models.VolumePruneResponseItem, error) {
 	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func VolumePrune(c *gin.Context, opts *models.VolumePruneOpts) (*map[string]mode
 	if err != nil {
 		return nil, err
 	}
-	response := make(map[string]models.VolumePruneResponse)
+	response := make(map[string]models.VolumePruneResponseItem)
 	var mutex sync.RWMutex
 	var wg sync.WaitGroup
 	wg.Add(len(clients))
@@ -129,7 +129,7 @@ func VolumePrune(c *gin.Context, opts *models.VolumePruneOpts) (*map[string]mode
 				return
 			}
 			mutex.Lock()
-			response[context] = models.VolumePruneResponse{
+			response[context] = models.VolumePruneResponseItem{
 				VolumesDeleted: pruneResponse.VolumesDeleted,
 				SpaceReclaimed: pruneResponse.SpaceReclaimed,
 			}

@@ -50,7 +50,7 @@ func MapConfigFromOptions(opts ContainerCreateConfig) containertypes.Config {
 	}
 }
 
-func MapPortsFromOptions(opts map[string]map[string]interface{}) map[nat.Port]struct{} {
+func MapPortsFromOptions(opts map[string]interface{}) map[nat.Port]struct{} {
 	var exposedPortsString []string
 	for key := range opts {
 		exposedPortsString = append(exposedPortsString, key)
@@ -62,7 +62,7 @@ func MapPortsFromOptions(opts map[string]map[string]interface{}) map[nat.Port]st
 	return exposedPorts
 }
 
-func MapDoubleMapToSingle(opts map[string]map[string]interface{}) map[string]struct{} {
+func MapDoubleMapToSingle(opts map[string]interface{}) map[string]struct{} {
 	volumes := make(map[string]struct{})
 	for key := range opts {
 		volumes[key] = struct{}{}

@@ -10,7 +10,7 @@
 package models
 
 type ExecStartOpts struct {
-	InlineObject1
+	ExecStartBody
 	Id      string `uri:"id" binding:"required"`
 	Context string `form:"context"`
 }

@@ -1191,11 +1191,9 @@ definitions:
 
           `{"<port>/<tcp|udp|sctp>": {}}`
         type: "object"
-        additionalProperties:
-          type: "object"
-          enum:
-            - {}
-          default: {}
+        enum:
+          - {}
+        default: {}
       Tty:
         description: |
           Attach standard streams to a TTY, including `stdin` if it is not closed.
@@ -1238,11 +1236,9 @@ definitions:
           An object mapping mount point paths inside the container to empty
           objects.
         type: "object"
-        additionalProperties:
-          type: "object"
-          enum:
-            - {}
-          default: {}
+        enum:
+          - {}
+        default: {}
       WorkingDir:
         description: "The working directory for commands to run in."
         type: "string"
@@ -1764,7 +1760,7 @@ definitions:
           The `Status` field is optional, and is omitted if the volume driver
           does not support this feature.
         additionalProperties:
-          type: "object"
+          type: "string"
       Labels:
         type: "object"
         description: "User-defined key/value metadata."
@@ -6398,6 +6394,7 @@ paths:
           description: "Exec configuration"
           schema:
             type: "object"
+            title: "ContainerExecBody"
             properties:
               AttachStdin:
                 type: "boolean"
@@ -6491,6 +6488,7 @@ paths:
           in: "body"
           schema:
             type: "object"
+            title: "ExecStartBody"
             properties:
               Detach:
                 type: "boolean"
@@ -7044,6 +7042,7 @@ paths:
           schema:
             type: "object"
             required: ["Name"]
+            title: "NetworkCreateBody"
             properties:
               Name:
                 description: "The network's name."
@@ -7155,6 +7154,7 @@ paths:
           required: true
           schema:
             type: "object"
+            title: "NetworkConnectBody"
             properties:
               Container:
                 type: "string"
@@ -7202,6 +7202,7 @@ paths:
           required: true
           schema:
             type: "object"
+            title: "NetworkDisconnectBody"
             properties:
               Container:
                 type: "string"
@@ -7455,6 +7456,7 @@ paths:
           schema:
             description: Configuration for a context that is portable between hosts
             type: "object"
+            title: "ContextUpdateBody"
             properties:
               Description:
                 description: |
@@ -7836,6 +7838,7 @@ paths:
             type: "array"
             items:
               type: "object"
+              title: "ProjectImageResponseItem"
               properties: 
                 ID:
                   type: "string"
@@ -8425,6 +8428,7 @@ paths:
           description: "The configuration to run."
           schema:
             type: "object"
+            title: "ProjectRunBody"
             properties:
               Name:
                 type: "string"

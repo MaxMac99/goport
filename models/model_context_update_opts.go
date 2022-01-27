@@ -10,6 +10,6 @@
 package models
 
 type ContextUpdateOpts struct {
-	InlineObject5
+	ContextUpdateBody
 	Name string `uri:"name" binding:"required"`
 }

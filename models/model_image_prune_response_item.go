@@ -9,11 +9,11 @@
 
 package models
 
-type ContainerPruneResponse struct {
+type ImagePruneResponseItem struct {
 
-	// Container IDs that were deleted
-	ContainersDeleted []string `json:"ContainersDeleted,omitempty"`
+	// Images that were deleted
+	ImagesDeleted []ImageDeleteResponseItem `json:"ImagesDeleted,omitempty"`
 
 	// Disk space reclaimed in bytes
-	SpaceReclaimed int64 `json:"SpaceReclaimed,omitempty"`
+	SpaceReclaimed uint64 `json:"SpaceReclaimed,omitempty"`
 }

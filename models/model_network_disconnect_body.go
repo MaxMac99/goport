@@ -9,20 +9,11 @@
 
 package models
 
-type ContextSummary struct {
+type NetworkDisconnectBody struct {
 
-	// The names that this context has been given 
-	Name string `json:"Name,omitempty"`
+	// The ID or name of the container to disconnect from the network. 
+	Container string `json:"Container,omitempty"`
 
-	// The description of the context 
-	Description string `json:"Description,omitempty"`
-
-	// The docker endpoint of the context 
-	Docker string `json:"Docker,omitempty"`
-
-	// The kubernetes endpoint of the context 
-	Kubernetes *string `json:"Kubernetes,omitempty"`
-
-	// The orchestrator of the context 
-	Orchestrator string `json:"Orchestrator,omitempty"`
+	// Force the container to disconnect from the network. 
+	Force bool `json:"Force,omitempty"`
 }

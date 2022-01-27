@@ -9,11 +9,10 @@
 
 package models
 
-type VolumePruneResponse struct {
+type LogObject struct {
+	Log *LogObjectLog `json:"Log,omitempty"`
 
-	// Volumes that were deleted
-	VolumesDeleted []string `json:"VolumesDeleted,omitempty"`
+	Status *LogObjectStatus `json:"Status,omitempty"`
 
-	// Disk space reclaimed in bytes
-	SpaceReclaimed uint64 `json:"SpaceReclaimed,omitempty"`
+	Register *LogObjectRegister `json:"Register,omitempty"`
 }

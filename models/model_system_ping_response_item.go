@@ -9,20 +9,16 @@
 
 package models
 
-type ContextSummary struct {
+type SystemPingResponseItem struct {
 
-	// The names that this context has been given 
-	Name string `json:"Name,omitempty"`
+	// Max API Version the server supports
+	APIVersion string `json:"APIVersion,omitempty"`
 
-	// The description of the context 
-	Description string `json:"Description,omitempty"`
+	// Default version of docker image builder
+	BuilderVersion string `json:"BuilderVersion,omitempty"`
 
-	// The docker endpoint of the context 
-	Docker string `json:"Docker,omitempty"`
+	// If the server is running with experimental mode enabled
+	Experimental bool `json:"Experimental,omitempty"`
 
-	// The kubernetes endpoint of the context 
-	Kubernetes *string `json:"Kubernetes,omitempty"`
-
-	// The orchestrator of the context 
-	Orchestrator string `json:"Orchestrator,omitempty"`
+	OSType string `json:"OSType,omitempty"`
 }

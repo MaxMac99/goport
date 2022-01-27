@@ -9,10 +9,20 @@
 
 package models
 
-type InlineObject3 struct {
+type ProgressResponse struct {
+	Id string `json:"Id,omitempty"`
 
-	// The ID or name of the container to connect to the network.
-	Container string `json:"Container,omitempty"`
+	Status string `json:"Status,omitempty"`
 
-	EndpointConfig EndpointSettings `json:"EndpointConfig,omitempty"`
+	Progress ProgressResponseProgress `json:"Progress,omitempty"`
+
+	Stream string `json:"Stream,omitempty"`
+
+	From string `json:"From,omitempty"`
+
+	Time int64 `json:"Time,omitempty"`
+
+	Error ProgressResponseError `json:"Error,omitempty"`
+
+	Aux string `json:"Aux,omitempty"`
 }

@@ -269,7 +269,7 @@ func ImageLoad(c *gin.Context, opts *models.ImageLoadOpts) (func(w io.Writer) bo
 }
 
 // ImagePrune - Delete unused images
-func ImagePrune(c *gin.Context, opts *models.ImagePruneOpts) (*map[string]models.ImagePruneResponse, error) {
+func ImagePrune(c *gin.Context, opts *models.ImagePruneOpts) (*map[string]models.ImagePruneResponseItem, error) {
 	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
@@ -278,7 +278,7 @@ func ImagePrune(c *gin.Context, opts *models.ImagePruneOpts) (*map[string]models
 	if err != nil {
 		return nil, err
 	}
-	response := make(map[string]models.ImagePruneResponse, len(clients))
+	response := make(map[string]models.ImagePruneResponseItem, len(clients))
 	var mutex sync.RWMutex
 	var wg sync.WaitGroup
 	wg.Add(len(clients))
@@ -299,7 +299,7 @@ func ImagePrune(c *gin.Context, opts *models.ImagePruneOpts) (*map[string]models
 			}
 			spaceReclaimed += pruneResponse.SpaceReclaimed
 			mutex.Lock()
-			response[context] = models.ImagePruneResponse{
+			response[context] = models.ImagePruneResponseItem{
 				ImagesDeleted:  imagesDeleted,
 				SpaceReclaimed: spaceReclaimed,
 			}

@@ -9,10 +9,12 @@
 
 package models
 
-type InlineObject6 struct {
+type ProjectRunBody struct {
 
 	// Assign a nem to the container.
 	ContainerName string `json:"Name,omitempty"`
+
+	Command []string `json:"Command,omitempty"`
 
 	// Override the entrypoint of the image.
 	Entrypoint []string `json:"Entrypoint,omitempty"`
@@ -49,7 +51,4 @@ type InlineObject6 struct {
 
 	// Working directory inside the container.
 	Workdir string `json:"Workdir,omitempty"`
-
-	// Working directory inside the container.
-	Command []string `json:"Command,omitempty"`
 }

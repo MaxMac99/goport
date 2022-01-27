@@ -9,11 +9,11 @@
 
 package models
 
-type InlineObject4 struct {
+type VolumePruneResponseItem struct {
 
-	// The ID or name of the container to disconnect from the network.
-	Container string `json:"Container,omitempty"`
+	// Volumes that were deleted
+	VolumesDeleted []string `json:"VolumesDeleted,omitempty"`
 
-	// Force the container to disconnect from the network.
-	Force bool `json:"Force,omitempty"`
+	// Disk space reclaimed in bytes
+	SpaceReclaimed uint64 `json:"SpaceReclaimed,omitempty"`
 }

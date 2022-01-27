@@ -10,7 +10,7 @@
 package models
 
 type NetworkConnectOpts struct {
-	InlineObject3
+	NetworkConnectBody
 	Id      string `uri:"id" binding:"required"`
 	Context string `form:"context"`
 }

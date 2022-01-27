@@ -9,20 +9,11 @@
 
 package models
 
-type ContextSummary struct {
+type ExecStartBody struct {
 
-	// The names that this context has been given 
-	Name string `json:"Name,omitempty"`
+	// Detach from the command.
+	Detach bool `json:"Detach,omitempty"`
 
-	// The description of the context 
-	Description string `json:"Description,omitempty"`
-
-	// The docker endpoint of the context 
-	Docker string `json:"Docker,omitempty"`
-
-	// The kubernetes endpoint of the context 
-	Kubernetes *string `json:"Kubernetes,omitempty"`
-
-	// The orchestrator of the context 
-	Orchestrator string `json:"Orchestrator,omitempty"`
+	// Allocate a pseudo-TTY.
+	Tty bool `json:"Tty,omitempty"`
 }

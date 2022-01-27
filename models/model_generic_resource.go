@@ -9,20 +9,10 @@
 
 package models
 
-type ContextSummary struct {
+// GenericResource - User-defined resources can be either Integer resources (e.g, `SSD=3`) or String resources (e.g, `GPU=UUID1`). 
+type GenericResource struct {
 
-	// The names that this context has been given 
-	Name string `json:"Name,omitempty"`
+	NamedResourceSpec GenericResourceNamedResourceSpec `json:"NamedResourceSpec,omitempty"`
 
-	// The description of the context 
-	Description string `json:"Description,omitempty"`
-
-	// The docker endpoint of the context 
-	Docker string `json:"Docker,omitempty"`
-
-	// The kubernetes endpoint of the context 
-	Kubernetes *string `json:"Kubernetes,omitempty"`
-
-	// The orchestrator of the context 
-	Orchestrator string `json:"Orchestrator,omitempty"`
+	DiscreteResourceSpec GenericResourceDiscreteResourceSpec `json:"DiscreteResourceSpec,omitempty"`
 }

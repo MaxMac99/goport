@@ -9,20 +9,9 @@
 
 package models
 
-type ContextSummary struct {
+type ProgressResponseError struct {
 
-	// The names that this context has been given 
-	Name string `json:"Name,omitempty"`
+	Code int32 `json:"Code,omitempty"`
 
-	// The description of the context 
-	Description string `json:"Description,omitempty"`
-
-	// The docker endpoint of the context 
-	Docker string `json:"Docker,omitempty"`
-
-	// The kubernetes endpoint of the context 
-	Kubernetes *string `json:"Kubernetes,omitempty"`
-
-	// The orchestrator of the context 
-	Orchestrator string `json:"Orchestrator,omitempty"`
+	Message string `json:"Message,omitempty"`
 }

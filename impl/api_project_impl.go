@@ -322,7 +322,7 @@ func ProjectList(c *gin.Context, opts *models.ProjectListOpts) (map[string][]pro
 }
 
 // ProjectLogs - Get project logs
-func ProjectLogs(c *gin.Context, opts *models.ProjectLogsOpts) ([]LogObject, func(w io.Writer) bool, error) {
+func ProjectLogs(c *gin.Context, opts *models.ProjectLogsOpts) ([]models.LogObject, func(w io.Writer) bool, error) {
 	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, nil, err
@@ -350,9 +350,9 @@ func ProjectLogsStream(c *gin.Context, name string, service project.ProjectServi
 	doneChan := make(chan bool)
 	errChan := make(chan error)
 	consumer := LogConsumer{
-		logChan:          make(chan LogMessage),
-		statusChan:       make(chan LogStatus),
-		registrationChan: make(chan LogRegistration),
+		logChan:          make(chan models.LogObjectLog),
+		statusChan:       make(chan models.LogObjectStatus),
+		registrationChan: make(chan models.LogObjectRegister),
 	}
 	go func() {
 		err := service.Logs(name, &consumer, api.LogOptions{
@@ -369,6 +369,7 @@ func ProjectLogsStream(c *gin.Context, name string, service project.ProjectServi
 		doneChan <- true
 	}()
 	return func(w io.Writer) bool {
+		var message models.LogObject
 		select {
 		case err := <-errChan:
 			WriteError(err, w)
@@ -376,54 +377,38 @@ func ProjectLogsStream(c *gin.Context, name string, service project.ProjectServi
 		case <-doneChan:
 			return false
 		case logItem := <-consumer.logChan:
-			message := LogObject{
+			message = models.LogObject{
 				Log: &logItem,
 			}
-			b, err := json.Marshal(message)
-			b = append(b, '\n')
-			if err != nil {
-				WriteError(err, w)
-			} else {
-				w.Write(b)
-			}
-			return true
 		case statusItem := <-consumer.statusChan:
-			message := LogObject{
+			message = models.LogObject{
 				Status: &statusItem,
 			}
-			b, err := json.Marshal(message)
-			b = append(b, '\n')
-			if err != nil {
-				WriteError(err, w)
-			} else {
-				w.Write(b)
-			}
-			return true
 		case registerItem := <-consumer.registrationChan:
-			message := LogObject{
-				Registration: &registerItem,
+			message = models.LogObject{
+				Register: &registerItem,
 			}
-			b, err := json.Marshal(message)
-			b = append(b, '\n')
-			if err != nil {
-				WriteError(err, w)
-			} else {
-				w.Write(b)
-			}
-			return true
 		case <-c.Request.Context().Done():
 			return false
 		}
+		b, err := json.Marshal(message)
+		b = append(b, '\n')
+		if err != nil {
+			WriteError(err, w)
+		} else {
+			w.Write(b)
+		}
+		return true
 	}
 }
 
-func ProjectLogsResponse(name string, service project.ProjectService, opts *models.ProjectLogsOpts) ([]LogObject, error) {
+func ProjectLogsResponse(name string, service project.ProjectService, opts *models.ProjectLogsOpts) ([]models.LogObject, error) {
 	doneChan := make(chan bool)
 	errChan := make(chan error)
 	consumer := LogConsumer{
-		logChan:          make(chan LogMessage),
-		statusChan:       make(chan LogStatus),
-		registrationChan: make(chan LogRegistration),
+		logChan:          make(chan models.LogObjectLog),
+		statusChan:       make(chan models.LogObjectStatus),
+		registrationChan: make(chan models.LogObjectRegister),
 	}
 	go func() {
 		err := service.Logs(name, &consumer, api.LogOptions{
@@ -439,7 +424,7 @@ func ProjectLogsResponse(name string, service project.ProjectService, opts *mode
 		}
 		doneChan <- true
 	}()
-	var allLogs []LogObject
+	var allLogs []models.LogObject
 	for {
 		select {
 		case err := <-errChan:
@@ -447,18 +432,18 @@ func ProjectLogsResponse(name string, service project.ProjectService, opts *mode
 		case <-doneChan:
 			return allLogs, nil
 		case logItem := <-consumer.logChan:
-			message := LogObject{
+			message := models.LogObject{
 				Log: &logItem,
 			}
 			allLogs = append(allLogs, message)
 		case statusItem := <-consumer.statusChan:
-			message := LogObject{
+			message := models.LogObject{
 				Status: &statusItem,
 			}
 			allLogs = append(allLogs, message)
 		case registerItem := <-consumer.registrationChan:
-			message := LogObject{
-				Registration: &registerItem,
+			message := models.LogObject{
+				Register: &registerItem,
 			}
 			allLogs = append(allLogs, message)
 		}
@@ -927,9 +912,9 @@ func ProjectUpStream(c *gin.Context, service project.ProjectService, project *ty
 	doneChan := make(chan bool)
 	errChan := make(chan error)
 	consumer := LogConsumer{
-		logChan:          make(chan LogMessage),
-		statusChan:       make(chan LogStatus),
-		registrationChan: make(chan LogRegistration),
+		logChan:          make(chan models.LogObjectLog),
+		statusChan:       make(chan models.LogObjectStatus),
+		registrationChan: make(chan models.LogObjectRegister),
 	}
 	opts.Start.Attach = &consumer
 	go func() {
@@ -940,6 +925,7 @@ func ProjectUpStream(c *gin.Context, service project.ProjectService, project *ty
 		doneChan <- true
 	}()
 	return func(w io.Writer) bool {
+		var message models.LogObject
 		select {
 		case err := <-errChan:
 			WriteError(err, w)
@@ -947,43 +933,27 @@ func ProjectUpStream(c *gin.Context, service project.ProjectService, project *ty
 		case <-doneChan:
 			return false
 		case logItem := <-consumer.logChan:
-			message := LogObject{
+			message = models.LogObject{
 				Log: &logItem,
 			}
-			b, err := json.Marshal(message)
-			b = append(b, '\n')
-			if err != nil {
-				WriteError(err, w)
-			} else {
-				w.Write(b)
-			}
-			return true
 		case statusItem := <-consumer.statusChan:
-			message := LogObject{
+			message = models.LogObject{
 				Status: &statusItem,
 			}
-			b, err := json.Marshal(message)
-			b = append(b, '\n')
-			if err != nil {
-				WriteError(err, w)
-			} else {
-				w.Write(b)
-			}
-			return true
 		case registerItem := <-consumer.registrationChan:
-			message := LogObject{
-				Registration: &registerItem,
+			message = models.LogObject{
+				Register: &registerItem,
 			}
-			b, err := json.Marshal(message)
-			b = append(b, '\n')
-			if err != nil {
-				WriteError(err, w)
-			} else {
-				w.Write(b)
-			}
-			return true
 		case <-c.Request.Context().Done():
 			return false
 		}
+		b, err := json.Marshal(message)
+		b = append(b, '\n')
+		if err != nil {
+			WriteError(err, w)
+		} else {
+			w.Write(b)
+		}
+		return true
 	}
 }

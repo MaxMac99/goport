@@ -1,34 +1,15 @@
 package impl
 
-type LogObject struct {
-	Log          *LogMessage      `json:"Log,omitempty"`
-	Status       *LogStatus       `json:"Status,omitempty"`
-	Registration *LogRegistration `json:"Register,omitempty"`
-}
-
-type LogMessage struct {
-	Service   string `json:"Service,omitempty"`
-	Container string `json:"Container,omitempty"`
-	Message   string `json:"Message,omitempty"`
-}
-
-type LogStatus struct {
-	Container string `json:"Container,omitempty"`
-	Message   string `json:"Message,omitempty"`
-}
-
-type LogRegistration struct {
-	Container string `json:"Container,omitempty"`
-}
+import "gitlab.com/maxmac99/goport/models"
 
 type LogConsumer struct {
-	logChan          chan LogMessage
-	statusChan       chan LogStatus
-	registrationChan chan LogRegistration
+	logChan          chan models.LogObjectLog
+	statusChan       chan models.LogObjectStatus
+	registrationChan chan models.LogObjectRegister
 }
 
 func (l *LogConsumer) Log(service, container, message string) {
-	l.logChan <- LogMessage{
+	l.logChan <- models.LogObjectLog{
 		Service:   service,
 		Container: container,
 		Message:   message,
@@ -36,14 +17,14 @@ func (l *LogConsumer) Log(service, container, message string) {
 }
 
 func (l *LogConsumer) Status(container, message string) {
-	l.statusChan <- LogStatus{
+	l.statusChan <- models.LogObjectStatus{
 		Container: container,
 		Message:   message,
 	}
 }
 
 func (l *LogConsumer) Register(container string) {
-	l.registrationChan <- LogRegistration{
+	l.registrationChan <- models.LogObjectRegister{
 		Container: container,
 	}
 }

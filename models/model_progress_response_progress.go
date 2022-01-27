@@ -9,20 +9,15 @@
 
 package models
 
-type ContextSummary struct {
+type ProgressResponseProgress struct {
 
-	// The names that this context has been given 
-	Name string `json:"Name,omitempty"`
+	Current int32 `json:"Current,omitempty"`
 
-	// The description of the context 
-	Description string `json:"Description,omitempty"`
+	Total int32 `json:"Total,omitempty"`
 
-	// The docker endpoint of the context 
-	Docker string `json:"Docker,omitempty"`
+	Start int32 `json:"Start,omitempty"`
 
-	// The kubernetes endpoint of the context 
-	Kubernetes *string `json:"Kubernetes,omitempty"`
+	HideCounts bool `json:"HideCounts,omitempty"`
 
-	// The orchestrator of the context 
-	Orchestrator string `json:"Orchestrator,omitempty"`
+	Units string `json:"Units,omitempty"`
 }

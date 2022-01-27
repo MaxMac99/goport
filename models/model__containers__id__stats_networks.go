@@ -9,11 +9,24 @@
 
 package models
 
-type InlineObject1 struct {
+type ContainersIdStatsNetworks struct {
+	RxBytes uint64 `json:"RxBytes,omitempty"`
 
-	// Detach from the command.
-	Detach bool `json:"Detach,omitempty"`
+	RxPackets uint64 `json:"RxPackets,omitempty"`
 
-	// Allocate a pseudo-TTY.
-	Tty bool `json:"Tty,omitempty"`
+	RxErrors uint64 `json:"RxErrors,omitempty"`
+
+	RxDropped uint64 `json:"RxDropped,omitempty"`
+
+	TxBytes uint64 `json:"TxBytes,omitempty"`
+
+	TxPackets uint64 `json:"TxPackets,omitempty"`
+
+	TxErrors uint64 `json:"TxErrors,omitempty"`
+
+	TxDropped uint64 `json:"TxDropped,omitempty"`
+
+	EndpointId string `json:"EndpointId,omitempty"`
+
+	InstanceId string `json:"InstanceId,omitempty"`
 }
