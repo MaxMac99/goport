@@ -5,7 +5,7 @@ import (
 )
 
 func (s *composeService) Top(projectName string, services []string) ([]api.ContainerProcSummary, error) {
-	buffer := newBufferedFile()
+	buffer := newEmptyStream()
 	service := getComposeService(s.apiClient, buffer)
 	summary, err := service.Top(s.ctx, projectName, services)
 	if err != nil {

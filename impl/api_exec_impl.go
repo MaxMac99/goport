@@ -12,13 +12,13 @@ package impl
 import (
 	"github.com/docker/docker/api/types"
 	"github.com/gin-gonic/gin"
-	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/context"
 	"gitlab.com/maxmac99/goport/models"
 )
 
 // ContainerExec - Create an exec instance
 func ContainerExec(c *gin.Context, opts *models.ContainerExecOpts) (*models.IdResponse, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func ContainerExec(c *gin.Context, opts *models.ContainerExecOpts) (*models.IdRe
 
 // ExecInspect - Inspect an exec instance
 func ExecInspect(c *gin.Context, opts *models.ExecInspectOpts) (*models.ExecInspectResponse, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func ExecInspect(c *gin.Context, opts *models.ExecInspectOpts) (*models.ExecInsp
 
 // ExecResize - Resize an exec instance
 func ExecResize(c *gin.Context, opts *models.ExecResizeOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func ExecResize(c *gin.Context, opts *models.ExecResizeOpts) error {
 
 // ExecStart - Start an exec instance
 func ExecStart(c *gin.Context, opts *models.ExecStartOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}

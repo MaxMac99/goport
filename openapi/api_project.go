@@ -37,10 +37,12 @@ func ProjectBuildHandler(c *gin.Context) {
 		return
 	}
 	if responseStream != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(responseStream)
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectCreate - Create a project
@@ -58,7 +60,7 @@ func ProjectCreateHandler(c *gin.Context) {
 	}
 	opts.Body = rawData
 	opts.Format = "json"
-	if c.ContentType() == "x-yaml" {
+	if c.ContentType() == "x-yaml" || c.ContentType() == "yaml" || c.ContentType() == "yml" {
 		opts.Format = "yaml"
 	}
 	err = impl.ProjectCreate(c, &opts)
@@ -67,7 +69,7 @@ func ProjectCreateHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectDown - Stops containers and removes containers, networks, volumes, and images created by up
@@ -87,7 +89,7 @@ func ProjectDownHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectEvents - Stream container events for every container in the project
@@ -108,6 +110,8 @@ func ProjectEventsHandler(c *gin.Context) {
 		return
 	}
 	if responseStream != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(responseStream)
 		return
 	}
@@ -147,6 +151,9 @@ func ProjectInspectHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
+	if opts.Format != "yaml" {
+		opts.Format = "json"
+	}
 	response, err := impl.ProjectInspect(c, &opts)
 	if err != nil {
 		code := errdefs.GetHTTPErrorStatusCode(err)
@@ -176,12 +183,17 @@ func ProjectKillHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectList - List projects
 func ProjectListHandler(c *gin.Context) {
-	response, err := impl.ProjectList(c)
+	var opts models.ProjectListOpts
+	if err := c.ShouldBind(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
+	response, err := impl.ProjectList(c, &opts)
 	if err != nil {
 		code := errdefs.GetHTTPErrorStatusCode(err)
 		c.JSON(code, err.Error())
@@ -211,6 +223,8 @@ func ProjectLogsHandler(c *gin.Context) {
 		return
 	}
 	if stream != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(stream)
 		return
 	}
@@ -237,7 +251,7 @@ func ProjectPauseHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectPs - Lists containers.
@@ -281,10 +295,12 @@ func ProjectPullHandler(c *gin.Context) {
 		return
 	}
 	if responseStream != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(responseStream)
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectPush - Pushes images for services to their respective `registry/repository`.
@@ -304,7 +320,7 @@ func ProjectPushHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectRemove - Removes stopped service containers.
@@ -324,7 +340,7 @@ func ProjectRemoveHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectRestart - Restarts all stopped and running services.
@@ -344,13 +360,17 @@ func ProjectRestartHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectRun - Runs a one-time command against a service.
 func ProjectRunHandler(c *gin.Context) {
 	var opts models.ProjectRunOpts
 	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
+	if err := c.ShouldBindQuery(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
@@ -374,6 +394,8 @@ func ProjectRunHandler(c *gin.Context) {
 		return
 	}
 	if responseStream != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(responseStream)
 		return
 	}
@@ -399,7 +421,7 @@ func ProjectStartHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectStop - Stops running containers without removing them.
@@ -419,7 +441,7 @@ func ProjectStopHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectTop - Displays the running processes.
@@ -462,7 +484,7 @@ func ProjectUnpauseHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ProjectUp - Builds, (re)creates, starts, and attaches to containers for a service.
@@ -483,8 +505,10 @@ func ProjectUpHandler(c *gin.Context) {
 		return
 	}
 	if responseStream != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(responseStream)
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }

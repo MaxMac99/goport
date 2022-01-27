@@ -21,6 +21,14 @@ import (
 // NetworkConnect - Connect a container to a network
 func NetworkConnectHandler(c *gin.Context) {
 	var opts models.NetworkConnectOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
+	if err := c.ShouldBindQuery(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -37,6 +45,10 @@ func NetworkConnectHandler(c *gin.Context) {
 // NetworkCreate - Create a network
 func NetworkCreateHandler(c *gin.Context) {
 	var opts models.NetworkCreateOpts
+	if err := c.ShouldBindQuery(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -56,6 +68,10 @@ func NetworkCreateHandler(c *gin.Context) {
 // NetworkDelete - Remove a network
 func NetworkDeleteHandler(c *gin.Context) {
 	var opts models.NetworkDeleteOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -66,12 +82,20 @@ func NetworkDeleteHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // NetworkDisconnect - Disconnect a container from a network
 func NetworkDisconnectHandler(c *gin.Context) {
 	var opts models.NetworkDisconnectOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
+	if err := c.ShouldBindQuery(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -88,6 +112,10 @@ func NetworkDisconnectHandler(c *gin.Context) {
 // NetworkInspect - Inspect a network
 func NetworkInspectHandler(c *gin.Context) {
 	var opts models.NetworkInspectOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return

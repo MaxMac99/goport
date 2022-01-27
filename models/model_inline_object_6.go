@@ -12,7 +12,7 @@ package models
 type InlineObject6 struct {
 
 	// Assign a nem to the container.
-	Name string `json:"Name,omitempty"`
+	ContainerName string `json:"Name,omitempty"`
 
 	// Override the entrypoint of the image.
 	Entrypoint []string `json:"Entrypoint,omitempty"`

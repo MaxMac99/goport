@@ -10,10 +10,10 @@
 package models
 
 type ProjectRunOpts struct {
-	Name       string        `uri:"name" binding:"required"`
-	Service    string        `uri:"service" binding:"required"`
-	Body       InlineObject6 `json:"body" binding:"required"`
-	Context    string        `form:"context"`
-	Detach     bool          `form:"detach,default=false"`
-	AutoRemove bool          `form:"autoremove,default=false"`
+	InlineObject6
+	Name       string `uri:"name" binding:"required"`
+	Service    string `uri:"service" binding:"required"`
+	Context    string `form:"context"`
+	Detach     bool   `form:"detach,default=false"`
+	AutoRemove bool   `form:"autoremove,default=false"`
 }

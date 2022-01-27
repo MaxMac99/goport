@@ -698,46 +698,27 @@ definitions:
         default: 0
         example: 100
 
-  ResourceObject:
-    description: |
-      An object describing the resources which can be advertised by a node and
-      requested by a task.
-    type: "object"
-    properties:
-      NanoCPUs:
-        type: "integer"
-        format: "int64"
-        example: 4000000000
-      MemoryBytes:
-        type: "integer"
-        format: "int64"
-        example: 8272408576
-      GenericResources:
-        $ref: "#/definitions/GenericResources"
-
-  GenericResources:
+  GenericResource:
     description: |
       User-defined resources can be either Integer resources (e.g, `SSD=3`) or
       String resources (e.g, `GPU=UUID1`).
-    type: "array"
-    items:
-      type: "object"
-      properties:
-        NamedResourceSpec:
-          type: "object"
-          properties:
-            Kind:
-              type: "string"
-            Value:
-              type: "string"
-        DiscreteResourceSpec:
-          type: "object"
-          properties:
-            Kind:
-              type: "string"
-            Value:
-              type: "integer"
-              format: "int64"
+    type: "object"
+    properties:
+      NamedResourceSpec:
+        type: "object"
+        properties:
+          Kind:
+            type: "string"
+          Value:
+            type: "string"
+      DiscreteResourceSpec:
+        type: "object"
+        properties:
+          Kind:
+            type: "string"
+          Value:
+            type: "integer"
+            format: "int64"
     example:
       - DiscreteResourceSpec:
           Kind: "SSD"
@@ -2190,6 +2171,43 @@ definitions:
           - "169.254.34.68"
           - "fe80::3468"
 
+  ProgressResponse:
+    type: "object"
+    properties:
+      Id:
+        type: "string"
+      Status:
+        type: "string"
+      Progress:
+        type: "object"
+        properties: 
+          Current:
+            type: "integer"
+          Total:
+            type: "integer"
+          Start:
+            type: "integer"
+          HideCounts:
+            type: "boolean"
+          Units:
+            type: "string"
+      Stream:
+        type: "string"
+      From:
+        type: "string"
+      Time:
+        type: "integer"
+      Error:
+        type: "object"
+        properties: 
+          Code:
+            type: "integer"
+          Message:
+            type: "string"
+      Aux:
+        type: "string"
+        format: "binary"
+
   PluginMount:
     type: "object"
     x-nullable: false
@@ -2504,73 +2522,71 @@ definitions:
         type: "string"
 
   ContainerSummary:
-    type: "array"
-    items:
-      type: "object"
-      properties:
-        Id:
-          description: "The ID of this container"
+    type: "object"
+    properties:
+      Id:
+        description: "The ID of this container"
+        type: "string"
+        x-go-name: "ID"
+      Names:
+        description: "The names that this container has been given"
+        type: "array"
+        items:
           type: "string"
-          x-go-name: "ID"
-        Names:
-          description: "The names that this container has been given"
-          type: "array"
-          items:
+      Image:
+        description: "The name of the image used when creating this container"
+        type: "string"
+      ImageID:
+        description: "The ID of the image that this container was created from"
+        type: "string"
+      Command:
+        description: "Command to run when starting the container"
+        type: "string"
+      Created:
+        description: "When the container was created"
+        type: "integer"
+        format: "int64"
+      Ports:
+        description: "The ports exposed by this container"
+        type: "array"
+        items:
+          $ref: "#/definitions/Port"
+      SizeRw:
+        description: "The size of files that have been created or changed by this container"
+        type: "integer"
+        format: "int64"
+      SizeRootFs:
+        description: "The total size of all the files in this container"
+        type: "integer"
+        format: "int64"
+      Labels:
+        description: "User-defined key/value metadata."
+        type: "object"
+        additionalProperties:
+          type: "string"
+      State:
+        description: "The state of this container (e.g. `Exited`)"
+        type: "string"
+      Status:
+        description: "Additional human-readable status of this container (e.g. `Exit 0`)"
+        type: "string"
+      HostConfig:
+        type: "object"
+        properties:
+          NetworkMode:
             type: "string"
-        Image:
-          description: "The name of the image used when creating this container"
-          type: "string"
-        ImageID:
-          description: "The ID of the image that this container was created from"
-          type: "string"
-        Command:
-          description: "Command to run when starting the container"
-          type: "string"
-        Created:
-          description: "When the container was created"
-          type: "integer"
-          format: "int64"
-        Ports:
-          description: "The ports exposed by this container"
-          type: "array"
-          items:
-            $ref: "#/definitions/Port"
-        SizeRw:
-          description: "The size of files that have been created or changed by this container"
-          type: "integer"
-          format: "int64"
-        SizeRootFs:
-          description: "The total size of all the files in this container"
-          type: "integer"
-          format: "int64"
-        Labels:
-          description: "User-defined key/value metadata."
-          type: "object"
-          additionalProperties:
-            type: "string"
-        State:
-          description: "The state of this container (e.g. `Exited`)"
-          type: "string"
-        Status:
-          description: "Additional human-readable status of this container (e.g. `Exit 0`)"
-          type: "string"
-        HostConfig:
-          type: "object"
-          properties:
-            NetworkMode:
-              type: "string"
-        NetworkSettings:
-          description: "A summary of the container's network settings"
-          type: "object"
-          properties:
-            Networks:
-              type: "object"
-              additionalProperties:
-                $ref: "#/definitions/EndpointSettings"
-        Mounts:
-          type: "array"
-          items:
-            $ref: "#/definitions/MountPoint"
+      NetworkSettings:
+        description: "A summary of the container's network settings"
+        type: "object"
+        properties:
+          Networks:
+            type: "object"
+            additionalProperties:
+              $ref: "#/definitions/EndpointSettings"
+      Mounts:
+        type: "array"
+        items:
+          $ref: "#/definitions/MountPoint"
 
   ProjectContainerSummaryItem:
     type: "object"
@@ -3029,7 +3045,9 @@ definitions:
       RegistryConfig:
         $ref: "#/definitions/RegistryServiceConfig"
       GenericResources:
-        $ref: "#/definitions/GenericResources"
+        type: "array"
+        items:
+          $ref: "#/definitions/GenericResource"
       HttpProxy:
         description: |
           HTTP-proxy configured for the daemon. This value is obtained from the
@@ -3505,31 +3523,29 @@ definitions:
         example: "2d41c047c83e09a6d61d464906feb2a2f3c52aa4"
 
   ContextSummary:
-    type: "array"
-    items:
-      type: "object"
-      properties:
-        Name:
-          description: |
-            The names that this context has been given
-          type: "string"
-        Description:
-          description: |
-            The description of the context
-          type: "string"
-        Docker:
-          description: |
-            The docker endpoint of the context
-          type: "string"
-        Kubernetes:
-          description: |
-            The kubernetes endpoint of the context
-          type: "string"
-          x-nullable: true
-        Orchestrator:
-          description: |
-            The orchestrator of the context
-          type: "string"
+    type: "object"
+    properties:
+      Name:
+        description: |
+          The names that this context has been given
+        type: "string"
+      Description:
+        description: |
+          The description of the context
+        type: "string"
+      Docker:
+        description: |
+          The docker endpoint of the context
+        type: "string"
+      Kubernetes:
+        description: |
+          The kubernetes endpoint of the context
+        type: "string"
+        x-nullable: true
+      Orchestrator:
+        description: |
+          The orchestrator of the context
+        type: "string"
 
   ContextConfig:
     description: Configuration for a context that is portable between hosts
@@ -3563,6 +3579,30 @@ definitions:
         type: "string"
         enum: ["created", "running", "paused", "restarting", "removing", "exited", "dead"]
         example: "running"
+
+  Stacks:
+    type: "array"
+    items:
+      type: "object"
+      properties: 
+        Id:
+          type: "string"
+        Name:
+          type: "string"
+        State:
+          description: |
+            String representation of the project state. 
+            Can be on of:
+              * "running": All of the services are running.
+              * "created": One of the services is created.
+              * "paused": One of the services is paused.
+              * "restarting": One of the services is restarting.
+              * "dead": One of the services is dead.
+              * "exited": One of the services is exited.
+              * "removing": One of the services is removing.
+              * "none": None of the services has been created or is in any other state.
+          enum: ["running", "created", "paused", "restarting", "dead", "exited", "removing", "none"]
+          type: "string"
 
   ProjectSummary:
     type: "array"
@@ -3637,6 +3677,31 @@ definitions:
         type: "string"
       Ports:
         $ref: "#/definitions/PortMap"
+
+  LogObject:
+    type: "object"
+    properties:
+      Log:
+        type: "object"
+        properties: 
+          Service:
+            type: "string"
+          Container:
+            type: "string"
+          Message:
+            type: "string"
+      Status:
+        type: "object"
+        properties: 
+          Container:
+            type: "string"
+          Message:
+            type: "string"
+      Register:
+        type: "object"
+        properties: 
+          Container:
+            type: "string"
 
 parameters:
   contextParam:
@@ -3717,7 +3782,9 @@ paths:
           schema:
             type: "object"
             additionalProperties:
-              $ref: "#/definitions/ContainerSummary"
+              type: "array"
+              items:
+                $ref: "#/definitions/ContainerSummary"
         400:
           description: "bad parameter"
           schema:
@@ -4995,16 +5062,19 @@ paths:
           schema:
             type: "object"
             title: "ContainerPruneResponse"
-            properties:
-              ContainersDeleted:
-                description: "Container IDs that were deleted"
-                type: "array"
-                items:
-                  type: "string"
-              SpaceReclaimed:
-                description: "Disk space reclaimed in bytes"
-                type: "integer"
-                format: "int64"
+            additionalProperties: 
+              type: "object"
+              title: "ContainerPruneResponseItem"
+              properties:
+                ContainersDeleted:
+                  description: "Container IDs that were deleted"
+                  type: "array"
+                  items:
+                    type: "string"
+                SpaceReclaimed:
+                  description: "Disk space reclaimed in bytes"
+                  type: "integer"
+                  format: "int64"
         500:
           description: "Server error"
           schema:
@@ -5281,6 +5351,25 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
       tags: ["Image"]
+  /build/cancel:
+    post:
+      summary: "Cancel a build"
+      produces:
+        - "application/json"
+      operationId: "BuildCancel"
+      parameters:
+        - $ref: "#/parameters/contextsParam"
+        - name: "id"
+          in: "query"
+          type: "string"
+      responses:
+        204:
+          description: "No error"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Image"]
   /build/prune:
     post:
       summary: "Delete builder cache"
@@ -5349,6 +5438,8 @@ paths:
       responses:
         200:
           description: "no error"
+          schema:
+            $ref: "#/definitions/ProgressResponse"
         404:
           description: "repository does not exist or no read access"
           schema:
@@ -5609,6 +5700,8 @@ paths:
       responses:
         200:
           description: "No error"
+          schema:
+            $ref: "#/definitions/ProgressResponse"
         404:
           description: "No such image"
           schema:
@@ -5824,16 +5917,18 @@ paths:
           schema:
             type: "object"
             title: "ImagePruneResponse"
-            properties:
-              ImagesDeleted:
-                description: "Images that were deleted"
-                type: "array"
-                items:
-                  $ref: "#/definitions/ImageDeleteResponseItem"
-              SpaceReclaimed:
-                description: "Disk space reclaimed in bytes"
-                type: "integer"
-                format: "uint64"
+            additionalProperties: 
+              title: "ImagePruneResponseItem"
+              properties:
+                ImagesDeleted:
+                  description: "Images that were deleted"
+                  type: "array"
+                  items:
+                    $ref: "#/definitions/ImageDeleteResponseItem"
+                SpaceReclaimed:
+                  description: "Disk space reclaimed in bytes"
+                  type: "integer"
+                  format: "uint64"
         500:
           description: "Server error"
           schema:
@@ -5884,29 +5979,30 @@ paths:
       operationId: "SystemPing"
       produces: ["text/plain"]
       parameters:
-        - $ref: "#/parameters/contextParam"
+        - $ref: "#/parameters/contextsParam"
       responses:
         200:
           description: "no error"
           schema:
-            type: "string"
-            example: "OK"
+            type: "object"
+            additionalProperties:
+              title: "SystemPingResponseItem"
+              type: "object"
+              properties: 
+                APIVersion:
+                  type: "string"
+                  description: "Max API Version the server supports"
+                BuilderVersion:
+                  type: "string"
+                  description: "Default version of docker image builder"
+                Experimental:
+                  type: "boolean"
+                  description: "If the server is running with experimental mode enabled"
+                OSType:
+                  type: "string"
           headers:
-            API-Version:
+            GoPortVersion:
               type: "string"
-              description: "Max API Version the server supports"
-            Builder-Version:
-              type: "string"
-              description: "Default version of docker image builder"
-            Docker-Experimental:
-              type: "boolean"
-              description: "If the server is running with experimental mode enabled"
-            Cache-Control:
-              type: "string"
-              default: "no-cache, no-store, must-revalidate"
-            Pragma:
-              type: "string"
-              default: "no-cache"
         500:
           description: "server error"
           schema:
@@ -6144,7 +6240,7 @@ paths:
           description: "no error"
           schema:
             type: "object"
-            additionalProperties: 
+            additionalProperties:
               type: "object"
               title: "SystemDataUsageResponse"
               properties:
@@ -6246,6 +6342,8 @@ paths:
       responses:
         200:
           description: "no error"
+          schema:
+            $ref: "#/definitions/ProgressResponse"
         500:
           description: "server error"
           schema:
@@ -6720,16 +6818,19 @@ paths:
           schema:
             type: "object"
             title: "VolumePruneResponse"
-            properties:
-              VolumesDeleted:
-                description: "Volumes that were deleted"
-                type: "array"
-                items:
-                  type: "string"
-              SpaceReclaimed:
-                description: "Disk space reclaimed in bytes"
-                type: "integer"
-                format: "uint64"
+            additionalProperties: 
+              type: "object"
+              title: "VolumePruneResponseItem"
+              properties:
+                VolumesDeleted:
+                  description: "Volumes that were deleted"
+                  type: "array"
+                  items:
+                    type: "string"
+                SpaceReclaimed:
+                  description: "Disk space reclaimed in bytes"
+                  type: "integer"
+                  format: "uint64"
         500:
           description: "Server error"
           schema:
@@ -7134,12 +7235,14 @@ paths:
           schema:
             type: "object"
             title: "NetworkPruneResponse"
-            properties:
-              NetworksDeleted:
-                description: "Networks that were deleted"
-                type: "array"
-                items:
-                  type: "string"
+            additionalProperties: 
+              title: "NetworkPruneResponseItem"
+              properties:
+                NetworksDeleted:
+                  description: "Networks that were deleted"
+                  type: "array"
+                  items:
+                    type: "string"
         500:
           description: "Server error"
           schema:
@@ -7162,51 +7265,11 @@ paths:
         200:
           description: "no error"
           schema:
-            $ref: "#/definitions/ContextSummary"
+            type: "array"
+            items:
+              $ref: "#/definitions/ContextSummary"
         400:
           description: "bad parameter"
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        500:
-          description: "server error"
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-      tags: ["Context"]
-  /contexts/create:
-    post:
-      summary: "Create a context"
-      operationId: "ContextCreate"
-      consumes:
-        - "application/json"
-        - "application/octet-stream"
-      produces:
-        - "application/json"
-      parameters:
-        - name: "name"
-          in: "query"
-          description: |
-            Assign the specified name to the context. Must match
-            `/?[a-zA-Z0-9][a-zA-Z0-9_.-]+`.
-          type: "string"
-          pattern: "^/?[a-zA-Z0-9][a-zA-Z0-9_.-]+$"
-        - name: "body"
-          in: "body"
-          description: "Context to create"
-          schema:
-            $ref: "#/definitions/ContextConfig"
-          required: true
-      responses:
-        201:
-          description: "Context created successfully"
-          schema:
-            description: "The saved name"
-            type: "string"
-        400:
-          description: "bad parameter"
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        409:
-          description: "conflict"
           schema:
             $ref: "#/definitions/ErrorResponse"
         500:
@@ -7274,6 +7337,48 @@ paths:
           type: "string"
       tags: ["Context"]
   /contexts/{name}:
+    post:
+      summary: "Create a context"
+      operationId: "ContextCreate"
+      consumes:
+        - "application/json"
+        - "application/octet-stream"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "name"
+          in: "path"
+          required: true
+          description: |
+            Assign the specified name to the context. Must match
+            `/?[a-zA-Z0-9][a-zA-Z0-9_.-]+`.
+          type: "string"
+          pattern: "^/?[a-zA-Z0-9][a-zA-Z0-9_.-]+$"
+        - name: "body"
+          in: "body"
+          description: "Context to create"
+          schema:
+            $ref: "#/definitions/ContextConfig"
+          required: true
+      responses:
+        201:
+          description: "Context created successfully"
+          schema:
+            description: "The saved name"
+            type: "string"
+        400:
+          description: "bad parameter"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: "conflict"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Context"]
     delete:
       summary: "Remove a context"
       operationId: "ContextDelete"
@@ -7374,11 +7479,20 @@ paths:
       operationId: "ProjectList"
       produces:
         - "application/json"
+      parameters:
+        - $ref: "#/parameters/contextsParam"
+        - name: "all"
+          in: "query"
+          description: "Filter output based on conditions provided."
+          type: "boolean"
+          default: false
       responses:
         200:
           description: "no error"
           schema:
-            $ref: "#/definitions/ProjectSummary"
+            type: "object"
+            additionalProperties: 
+              $ref: "#/definitions/Stacks"
         400:
           description: "bad parameter"
           schema:
@@ -7833,8 +7947,9 @@ paths:
             Note that unlike the attach endpoint, the logs endpoint does not
             upgrade the connection and does not set Content-Type.
           schema:
-            type: "string"
-            format: "binary"
+            type: "array"
+            items: 
+              $ref: "#/definitions/LogObject"
         404:
           description: "no such project"
           schema:
@@ -8611,8 +8726,9 @@ paths:
             Note that unlike the attach endpoint, the logs endpoint does not
             upgrade the connection and does not set Content-Type.
           schema:
-            type: "string"
-            format: "binary"
+            type: "array"
+            items: 
+              $ref: "#/definitions/LogObject"
         204:
           description: "no error"
         304:

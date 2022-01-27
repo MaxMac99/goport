@@ -17,13 +17,13 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
-	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/context"
 	"gitlab.com/maxmac99/goport/models"
 )
 
 // NetworkConnect - Connect a container to a network
 func NetworkConnect(c *gin.Context, opts *models.NetworkConnectOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func NetworkConnect(c *gin.Context, opts *models.NetworkConnectOpts) error {
 
 // NetworkCreate - Create a network
 func NetworkCreate(c *gin.Context, opts *models.NetworkCreateOpts) (*models.NetworkCreateResponse, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func NetworkCreate(c *gin.Context, opts *models.NetworkCreateOpts) (*models.Netw
 
 // NetworkDelete - Remove a network
 func NetworkDelete(c *gin.Context, opts *models.NetworkDeleteOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func NetworkDelete(c *gin.Context, opts *models.NetworkDeleteOpts) error {
 
 // NetworkDisconnect - Disconnect a container from a network
 func NetworkDisconnect(c *gin.Context, opts *models.NetworkDisconnectOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func NetworkDisconnect(c *gin.Context, opts *models.NetworkDisconnectOpts) error
 
 // NetworkInspect - Inspect a network
 func NetworkInspect(c *gin.Context, opts *models.NetworkInspectOpts) (*types.NetworkResource, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func NetworkInspect(c *gin.Context, opts *models.NetworkInspectOpts) (*types.Net
 
 // NetworkList - List networks
 func NetworkList(c *gin.Context, opts *models.NetworkListOpts) (*map[string][]models.Network, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +174,8 @@ func NetworkList(c *gin.Context, opts *models.NetworkListOpts) (*map[string][]mo
 }
 
 // NetworkPrune - Delete unused networks
-func NetworkPrune(c *gin.Context, opts *models.NetworkPruneOpts) (*models.NetworkPruneResponse, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+func NetworkPrune(c *gin.Context, opts *models.NetworkPruneOpts) (*map[string]models.NetworkPruneResponse, error) {
+	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -183,25 +183,25 @@ func NetworkPrune(c *gin.Context, opts *models.NetworkPruneOpts) (*models.Networ
 	if err != nil {
 		return nil, err
 	}
-	var networksDeleted []string
+	response := make(map[string]models.NetworkPruneResponse, len(clients))
 	var mutex sync.RWMutex
 	var wg sync.WaitGroup
 	wg.Add(len(clients))
 	for context, cli := range clients {
 		go func(context string, cli client.APIClient) {
-			response, err := cli.NetworksPrune(c, parsedFilters)
+			pruneResponse, err := cli.NetworksPrune(c, parsedFilters)
 			if err != nil {
 				wg.Done()
 				return
 			}
 			mutex.Lock()
-			networksDeleted = append(networksDeleted, response.NetworksDeleted...)
+			response[context] = models.NetworkPruneResponse{
+				NetworksDeleted: pruneResponse.NetworksDeleted,
+			}
 			mutex.Unlock()
 			wg.Done()
 		}(context, cli)
 	}
 	wg.Wait()
-	return &models.NetworkPruneResponse{
-		NetworksDeleted: networksDeleted,
-	}, nil
+	return &response, nil
 }

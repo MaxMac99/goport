@@ -45,6 +45,8 @@ func NewRouter() *gin.Engine {
 			router.PATCH(route.Pattern, route.HandlerFunc)
 		case http.MethodDelete:
 			router.DELETE(route.Pattern, route.HandlerFunc)
+		case http.MethodHead:
+			router.HEAD(route.Pattern, route.HandlerFunc)
 		}
 	}
 
@@ -55,567 +57,588 @@ var routes = Routes{
 	{
 		"ContainerChanges",
 		http.MethodGet,
-		"/v1.0/containers/:id/changes",
+		"/v1/containers/:id/changes",
 		ContainerChangesHandler,
 	},
 
 	{
 		"ContainerCreate",
 		http.MethodPost,
-		"/v1.0/containers/create",
+		"/v1/containers/create",
 		ContainerCreateHandler,
 	},
 
 	{
 		"ContainerDelete",
 		http.MethodDelete,
-		"/v1.0/containers/:id",
+		"/v1/containers/:id",
 		ContainerDeleteHandler,
 	},
 
 	{
 		"ContainerExport",
 		http.MethodGet,
-		"/v1.0/containers/:id/export",
+		"/v1/containers/:id/export",
 		ContainerExportHandler,
 	},
 
 	{
 		"ContainerInspect",
 		http.MethodGet,
-		"/v1.0/containers/:id/json",
+		"/v1/containers/:id/json",
 		ContainerInspectHandler,
 	},
 
 	{
 		"ContainerKill",
 		http.MethodPost,
-		"/v1.0/containers/:id/kill",
+		"/v1/containers/:id/kill",
 		ContainerKillHandler,
 	},
 
 	{
 		"ContainerList",
 		http.MethodGet,
-		"/v1.0/containers/json",
+		"/v1/containers/json",
 		ContainerListHandler,
 	},
 
 	{
 		"ContainerLogs",
 		http.MethodGet,
-		"/v1.0/containers/:id/logs",
+		"/v1/containers/:id/logs",
 		ContainerLogsHandler,
 	},
 
 	{
 		"ContainerPause",
 		http.MethodPost,
-		"/v1.0/containers/:id/pause",
+		"/v1/containers/:id/pause",
 		ContainerPauseHandler,
 	},
 
 	{
 		"ContainerPrune",
 		http.MethodPost,
-		"/v1.0/containers/prune",
+		"/v1/containers/prune",
 		ContainerPruneHandler,
 	},
 
 	{
 		"ContainerRename",
 		http.MethodPost,
-		"/v1.0/containers/:id/rename",
+		"/v1/containers/:id/rename",
 		ContainerRenameHandler,
 	},
 
 	{
 		"ContainerResize",
 		http.MethodPost,
-		"/v1.0/containers/:id/resize",
+		"/v1/containers/:id/resize",
 		ContainerResizeHandler,
 	},
 
 	{
 		"ContainerRestart",
 		http.MethodPost,
-		"/v1.0/containers/:id/restart",
+		"/v1/containers/:id/restart",
 		ContainerRestartHandler,
 	},
 
 	{
 		"ContainerStart",
 		http.MethodPost,
-		"/v1.0/containers/:id/start",
+		"/v1/containers/:id/start",
 		ContainerStartHandler,
 	},
 
 	{
 		"ContainerStats",
 		http.MethodGet,
-		"/v1.0/containers/:id/stats",
+		"/v1/containers/:id/stats",
 		ContainerStatsHandler,
 	},
 
 	{
 		"ContainerStop",
 		http.MethodPost,
-		"/v1.0/containers/:id/stop",
+		"/v1/containers/:id/stop",
 		ContainerStopHandler,
 	},
 
 	{
 		"ContainerTop",
 		http.MethodGet,
-		"/v1.0/containers/:id/top",
+		"/v1/containers/:id/top",
 		ContainerTopHandler,
 	},
 
 	{
 		"ContainerUnpause",
 		http.MethodPost,
-		"/v1.0/containers/:id/unpause",
+		"/v1/containers/:id/unpause",
 		ContainerUnpauseHandler,
 	},
 
 	{
 		"ContainerUpdate",
 		http.MethodPost,
-		"/v1.0/containers/:id/update",
+		"/v1/containers/:id/update",
 		ContainerUpdateHandler,
 	},
 
 	{
 		"ContainerWait",
 		http.MethodPost,
-		"/v1.0/containers/:id/wait",
+		"/v1/containers/:id/wait",
 		ContainerWaitHandler,
 	},
 
 	{
 		"ContextCreate",
 		http.MethodPost,
-		"/v1.0/contexts/create",
+		"/v1/contexts/:name",
 		ContextCreateHandler,
 	},
 
 	{
 		"ContextDelete",
 		http.MethodDelete,
-		"/v1.0/contexts/:name",
+		"/v1/contexts/:name",
 		ContextDeleteHandler,
 	},
 
 	{
 		"ContextInspect",
 		http.MethodGet,
-		"/v1.0/contexts/:name/json",
+		"/v1/contexts/:name/json",
 		ContextInspectHandler,
 	},
 
 	{
 		"ContextList",
 		http.MethodGet,
-		"/v1.0/contexts/json",
+		"/v1/contexts/json",
 		ContextListHandler,
 	},
 
 	{
 		"ContextUpdate",
 		http.MethodPost,
-		"/v1.0/contexts/:name/update",
+		"/v1/contexts/:name/update",
 		ContextUpdateHandler,
 	},
 
 	{
 		"ContainerExec",
 		http.MethodPost,
-		"/v1.0/containers/:id/exec",
+		"/v1/containers/:id/exec",
 		ContainerExecHandler,
 	},
 
 	{
 		"ExecInspect",
 		http.MethodGet,
-		"/v1.0/exec/:id/json",
+		"/v1/exec/:id/json",
 		ExecInspectHandler,
 	},
 
 	{
 		"ExecResize",
 		http.MethodPost,
-		"/v1.0/exec/:id/resize",
+		"/v1/exec/:id/resize",
 		ExecResizeHandler,
 	},
 
 	{
 		"ExecStart",
 		http.MethodPost,
-		"/v1.0/exec/:id/start",
+		"/v1/exec/:id/start",
 		ExecStartHandler,
 	},
 
 	{
 		"BuildPrune",
 		http.MethodPost,
-		"/v1.0/build/prune",
+		"/v1/build/prune",
 		BuildPruneHandler,
+	},
+
+	{
+		"BuildCancel",
+		http.MethodPost,
+		"/v1/build/cancel",
+		BuildCancelHandler,
 	},
 
 	{
 		"ImageBuild",
 		http.MethodPost,
-		"/v1.0/build",
+		"/v1/build",
 		ImageBuildHandler,
 	},
 
 	{
 		"ImageCommit",
 		http.MethodPost,
-		"/v1.0/commit",
+		"/v1/commit",
 		ImageCommitHandler,
 	},
 
 	{
 		"ImageCreate",
 		http.MethodPost,
-		"/v1.0/images/create",
+		"/v1/images/create",
 		ImageCreateHandler,
 	},
 
 	{
 		"ImageDelete",
 		http.MethodDelete,
-		"/v1.0/images/:name",
+		"/v1/images/:name",
 		ImageDeleteHandler,
 	},
 
 	{
 		"ImageHistory",
 		http.MethodGet,
-		"/v1.0/images/:name/history",
+		"/v1/images/:name/history",
 		ImageHistoryHandler,
 	},
 
 	{
 		"ImageInspect",
 		http.MethodGet,
-		"/v1.0/images/:name/json",
+		"/v1/images/:name/json",
 		ImageInspectHandler,
 	},
 
 	{
 		"ImageList",
 		http.MethodGet,
-		"/v1.0/images/json",
+		"/v1/images/json",
 		ImageListHandler,
 	},
 
 	{
 		"ImageLoad",
 		http.MethodPost,
-		"/v1.0/images/load",
+		"/v1/images/load",
 		ImageLoadHandler,
 	},
 
 	{
 		"ImagePrune",
 		http.MethodPost,
-		"/v1.0/images/prune",
+		"/v1/images/prune",
 		ImagePruneHandler,
 	},
 
 	{
 		"ImagePush",
 		http.MethodPost,
-		"/v1.0/images/:name/push",
+		"/v1/images/:name/push",
 		ImagePushHandler,
 	},
 
 	{
 		"ImageSearch",
 		http.MethodGet,
-		"/v1.0/images/search",
+		"/v1/images/search",
 		ImageSearchHandler,
 	},
 
 	{
 		"ImageTag",
 		http.MethodPost,
-		"/v1.0/images/:name/tag",
+		"/v1/images/:name/tag",
 		ImageTagHandler,
 	},
 
 	{
 		"NetworkConnect",
 		http.MethodPost,
-		"/v1.0/networks/:id/connect",
+		"/v1/networks/:id/connect",
 		NetworkConnectHandler,
 	},
 
 	{
 		"NetworkCreate",
 		http.MethodPost,
-		"/v1.0/networks/create",
+		"/v1/networks/create",
 		NetworkCreateHandler,
 	},
 
 	{
 		"NetworkDelete",
 		http.MethodDelete,
-		"/v1.0/networks/:id",
+		"/v1/networks/:id",
 		NetworkDeleteHandler,
 	},
 
 	{
 		"NetworkDisconnect",
 		http.MethodPost,
-		"/v1.0/networks/:id/disconnect",
+		"/v1/networks/:id/disconnect",
 		NetworkDisconnectHandler,
 	},
 
 	{
 		"NetworkInspect",
 		http.MethodGet,
-		"/v1.0/networks/:id",
+		"/v1/networks/:id",
 		NetworkInspectHandler,
 	},
 
 	{
 		"NetworkList",
 		http.MethodGet,
-		"/v1.0/networks",
+		"/v1/networks",
 		NetworkListHandler,
 	},
 
 	{
 		"NetworkPrune",
 		http.MethodPost,
-		"/v1.0/networks/prune",
+		"/v1/networks/prune",
 		NetworkPruneHandler,
 	},
 
 	{
 		"ProjectBuild",
 		http.MethodPost,
-		"/v1.0/projects/:name/build",
+		"/v1/projects/:name/build",
 		ProjectBuildHandler,
 	},
 
 	{
 		"ProjectCreate",
 		http.MethodPost,
-		"/v1.0/projects/:name",
+		"/v1/projects/:name",
 		ProjectCreateHandler,
 	},
 
 	{
 		"ProjectDown",
 		http.MethodPost,
-		"/v1.0/projects/:name/down",
+		"/v1/projects/:name/down",
 		ProjectDownHandler,
 	},
 
 	{
 		"ProjectEvents",
 		http.MethodGet,
-		"/v1.0/projects/:name/events",
+		"/v1/projects/:name/events",
 		ProjectEventsHandler,
 	},
 
 	{
 		"ProjectImages",
 		http.MethodGet,
-		"/v1.0/projects/:name/images",
+		"/v1/projects/:name/images",
 		ProjectImagesHandler,
 	},
 
 	{
 		"ProjectInspect",
 		http.MethodGet,
-		"/v1.0/projects/:name",
+		"/v1/projects/:name",
 		ProjectInspectHandler,
 	},
 
 	{
 		"ProjectKill",
 		http.MethodPost,
-		"/v1.0/projects/:name/kill",
+		"/v1/projects/:name/kill",
 		ProjectKillHandler,
 	},
 
 	{
 		"ProjectList",
 		http.MethodGet,
-		"/v1.0/projects/json",
+		"/v1/projects/json",
 		ProjectListHandler,
 	},
 
 	{
 		"ProjectLogs",
 		http.MethodGet,
-		"/v1.0/projects/:name/logs",
+		"/v1/projects/:name/logs",
 		ProjectLogsHandler,
 	},
 
 	{
 		"ProjectPause",
 		http.MethodPost,
-		"/v1.0/projects/:name/pause",
+		"/v1/projects/:name/pause",
 		ProjectPauseHandler,
 	},
 
 	{
 		"ProjectPs",
 		http.MethodPost,
-		"/v1.0/projects/:name/ps",
+		"/v1/projects/:name/ps",
 		ProjectPsHandler,
 	},
 
 	{
 		"ProjectPull",
 		http.MethodPost,
-		"/v1.0/projects/:name/pull",
+		"/v1/projects/:name/pull",
 		ProjectPullHandler,
 	},
 
 	{
 		"ProjectPush",
 		http.MethodPost,
-		"/v1.0/projects/:name/push",
+		"/v1/projects/:name/push",
 		ProjectPushHandler,
 	},
 
 	{
 		"ProjectRemove",
 		http.MethodPost,
-		"/v1.0/projects/:name/rm",
+		"/v1/projects/:name/rm",
 		ProjectRemoveHandler,
 	},
 
 	{
 		"ProjectRestart",
 		http.MethodPost,
-		"/v1.0/projects/:name/restart",
+		"/v1/projects/:name/restart",
 		ProjectRestartHandler,
 	},
 
 	{
 		"ProjectRun",
 		http.MethodPost,
-		"/v1.0/projects/:name/run/:service",
+		"/v1/projects/:name/run/:service",
 		ProjectRunHandler,
 	},
 
 	{
 		"ProjectStart",
 		http.MethodPost,
-		"/v1.0/projects/:name/start",
+		"/v1/projects/:name/start",
 		ProjectStartHandler,
 	},
 
 	{
 		"ProjectStop",
 		http.MethodPost,
-		"/v1.0/projects/:name/stop",
+		"/v1/projects/:name/stop",
 		ProjectStopHandler,
 	},
 
 	{
 		"ProjectTop",
 		http.MethodGet,
-		"/v1.0/projects/:name/top",
+		"/v1/projects/:name/top",
 		ProjectTopHandler,
 	},
 
 	{
 		"ProjectUnpause",
 		http.MethodPost,
-		"/v1.0/projects/:name/unpause",
+		"/v1/projects/:name/unpause",
 		ProjectUnpauseHandler,
 	},
 
 	{
 		"ProjectUp",
 		http.MethodPost,
-		"/v1.0/projects/:name/up",
+		"/v1/projects/:name/up",
 		ProjectUpHandler,
 	},
 
 	{
 		"SystemDataUsage",
 		http.MethodGet,
-		"/v1.0/system/df",
+		"/v1/system/df",
 		SystemDataUsageHandler,
 	},
 
 	{
 		"SystemEvents",
 		http.MethodGet,
-		"/v1.0/events",
+		"/v1/events",
 		SystemEventsHandler,
 	},
 
 	{
 		"SystemInfo",
 		http.MethodGet,
-		"/v1.0/info",
+		"/v1/info",
 		SystemInfoHandler,
 	},
 
 	{
 		"SystemPing",
 		http.MethodGet,
-		"/v1.0/_ping",
+		"/_ping",
 		SystemPingHandler,
 	},
 
 	{
 		"SystemPingHead",
 		http.MethodHead,
-		"/v1.0/_ping",
+		"/_ping",
+		SystemPingHeadHandler,
+	},
+
+	{
+		"SystemPing",
+		http.MethodGet,
+		"/v1/_ping",
+		SystemPingHandler,
+	},
+
+	{
+		"SystemPingHead",
+		http.MethodHead,
+		"/v1/_ping",
 		SystemPingHeadHandler,
 	},
 
 	{
 		"SystemVersion",
 		http.MethodGet,
-		"/v1.0/version",
+		"/v1/version",
 		SystemVersionHandler,
 	},
 
 	{
 		"VolumeCreate",
 		http.MethodPost,
-		"/v1.0/volumes/create",
+		"/v1/volumes/create",
 		VolumeCreateHandler,
 	},
 
 	{
 		"VolumeDelete",
 		http.MethodDelete,
-		"/v1.0/volumes/:name",
+		"/v1/volumes/:name",
 		VolumeDeleteHandler,
 	},
 
 	{
 		"VolumeInspect",
 		http.MethodGet,
-		"/v1.0/volumes/:name",
+		"/v1/volumes/:name",
 		VolumeInspectHandler,
 	},
 
 	{
 		"VolumeList",
 		http.MethodGet,
-		"/v1.0/volumes",
+		"/v1/volumes",
 		VolumeListHandler,
 	},
 
 	{
 		"VolumePrune",
 		http.MethodPost,
-		"/v1.0/volumes/prune",
+		"/v1/volumes/prune",
 		VolumePruneHandler,
 	},
 }

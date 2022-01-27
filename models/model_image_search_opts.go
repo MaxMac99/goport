@@ -10,9 +10,8 @@
 package models
 
 type ImageSearchOpts struct {
-	Context      string `form:"context"`
 	Term         string `form:"term" binding:"required"`
-	Limit        int    `form:"limit"`
+	Limit        int    `form:"limit,default=10"`
 	Filters      string `form:"filters"`
 	RegistryAuth string `header:"X-Registry-Auth"`
 }

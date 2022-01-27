@@ -17,13 +17,13 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
-	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/context"
 	"gitlab.com/maxmac99/goport/models"
 )
 
 // BuildPrune - Delete builder cache
-func BuildPrune(c *gin.Context, opts *models.BuildPruneOpts) (*models.BuildPruneResponse, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+func BuildPrune(c *gin.Context, opts *models.BuildPruneOpts) (*map[string]models.BuildPruneResponse, error) {
+	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +37,7 @@ func BuildPrune(c *gin.Context, opts *models.BuildPruneOpts) (*models.BuildPrune
 		Filters:     parsedFilters,
 	}
 
-	var cachesDeleted []string
-	var reclaimedSpace uint64 = 0
+	response := make(map[string]models.BuildPruneResponse, len(clients))
 	var mutex sync.RWMutex
 	var wg sync.WaitGroup
 	wg.Add(len(clients))
@@ -50,22 +49,30 @@ func BuildPrune(c *gin.Context, opts *models.BuildPruneOpts) (*models.BuildPrune
 				return
 			}
 			mutex.Lock()
-			cachesDeleted = append(cachesDeleted, prune.CachesDeleted...)
-			reclaimedSpace += prune.SpaceReclaimed
+			response[context] = models.BuildPruneResponse{
+				CachesDeleted:  prune.CachesDeleted,
+				SpaceReclaimed: prune.SpaceReclaimed,
+			}
 			mutex.Unlock()
 			wg.Done()
 		}(context, cli)
 	}
 	wg.Wait()
-	return &models.BuildPruneResponse{
-		CachesDeleted:  cachesDeleted,
-		SpaceReclaimed: reclaimedSpace,
-	}, nil
+	return &response, nil
+}
+
+// BuildCancel - Cancel a Build
+func BuildCancel(c *gin.Context, opts *models.BuildCancelOpts) error {
+	client, err := context.ResolveContext(opts.Context)
+	if err != nil {
+		return err
+	}
+	return client.BuildCancel(c, opts.Id)
 }
 
 // ImageBuild - Build an image
 func ImageBuild(c *gin.Context, opts *models.ImageBuildOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +81,12 @@ func ImageBuild(c *gin.Context, opts *models.ImageBuildOpts) (func(w io.Writer) 
 	if err != nil {
 		return nil, err
 	}
-	return controllers.StreamResponse(c, response.Body), nil
+	return StreamReadingResponse(c, response.Body), nil
 }
 
 // ImageCommit - Create a new image from a container
 func ImageCommit(c *gin.Context, opts *models.ImageCommitOpts) (*models.IdResponse, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +102,7 @@ func ImageCommit(c *gin.Context, opts *models.ImageCommitOpts) (*models.IdRespon
 
 // ImageCreate - Create an image
 func ImageCreate(c *gin.Context, opts *models.ImageCreateOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +120,11 @@ func ImageCreate(c *gin.Context, opts *models.ImageCreateOpts) (func(w io.Writer
 			PrivilegeFunc: nil,
 			Platform:      opts.Platform,
 		}
-		response, err = client.ImagePull(c, opts.FromImage+":"+tag, options)
+		reference := opts.FromImage
+		if tag != "" {
+			reference += ":" + tag
+		}
+		response, err = client.ImagePull(c, reference, options)
 	} else {
 		source := types.ImageImportSource{
 			Source:     c.Request.Body,
@@ -137,12 +148,12 @@ func ImageCreate(c *gin.Context, opts *models.ImageCreateOpts) (func(w io.Writer
 	if opts.Quiet {
 		return nil, nil
 	}
-	return controllers.StreamResponse(c, response), nil
+	return StreamReadingResponse(c, response), nil
 }
 
 // ImageDelete - Remove an image
 func ImageDelete(c *gin.Context, opts *models.ImageDeleteOpts) (*[]models.ImageDeleteResponseItem, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +177,7 @@ func ImageDelete(c *gin.Context, opts *models.ImageDeleteOpts) (*[]models.ImageD
 
 // ImageHistory - Get the history of an image
 func ImageHistory(c *gin.Context, opts *models.ImageHistoryOpts) (*[]models.HistoryResponseItem, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -176,11 +187,15 @@ func ImageHistory(c *gin.Context, opts *models.ImageHistoryOpts) (*[]models.Hist
 	}
 	var modelResponse []models.HistoryResponseItem
 	for _, item := range response {
+		tags := make([]string, 0)
+		if len(item.Tags) > 0 {
+			tags = item.Tags
+		}
 		modelResponse = append(modelResponse, models.HistoryResponseItem{
 			Id:        item.ID,
 			Created:   item.Created,
 			CreatedBy: item.CreatedBy,
-			Tags:      item.Tags,
+			Tags:      tags,
 			Size:      item.Size,
 			Comment:   item.Comment,
 		})
@@ -190,7 +205,7 @@ func ImageHistory(c *gin.Context, opts *models.ImageHistoryOpts) (*[]models.Hist
 
 // ImageInspect - Inspect an image
 func ImageInspect(c *gin.Context, opts *models.ImageInspectOpts) (*types.ImageInspect, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +218,7 @@ func ImageInspect(c *gin.Context, opts *models.ImageInspectOpts) (*types.ImageIn
 
 // ImageList - List Images
 func ImageList(c *gin.Context, opts *models.ImageListOpts) (*map[string][]models.ImageSummary, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +257,7 @@ func ImageList(c *gin.Context, opts *models.ImageListOpts) (*map[string][]models
 
 // ImageLoad - Import images
 func ImageLoad(c *gin.Context, opts *models.ImageLoadOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -250,12 +265,12 @@ func ImageLoad(c *gin.Context, opts *models.ImageLoadOpts) (func(w io.Writer) bo
 	if err != nil {
 		return nil, err
 	}
-	return controllers.StreamResponse(c, response.Body), nil
+	return StreamReadingResponse(c, response.Body), nil
 }
 
 // ImagePrune - Delete unused images
-func ImagePrune(c *gin.Context, opts *models.ImagePruneOpts) (*models.ImagePruneResponse, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+func ImagePrune(c *gin.Context, opts *models.ImagePruneOpts) (*map[string]models.ImagePruneResponse, error) {
+	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -263,40 +278,42 @@ func ImagePrune(c *gin.Context, opts *models.ImagePruneOpts) (*models.ImagePrune
 	if err != nil {
 		return nil, err
 	}
-	var imagesDeleted []models.ImageDeleteResponseItem
-	var spaceReclaimed uint64
+	response := make(map[string]models.ImagePruneResponse, len(clients))
 	var mutex sync.RWMutex
 	var wg sync.WaitGroup
 	wg.Add(len(clients))
 	for context, cli := range clients {
 		go func(context string, cli client.APIClient) {
-			response, err := cli.ImagesPrune(c, parsedFilters)
+			pruneResponse, err := cli.ImagesPrune(c, parsedFilters)
 			if err != nil {
 				wg.Done()
 				return
 			}
-			mutex.Lock()
-			for _, item := range response.ImagesDeleted {
+			var imagesDeleted []models.ImageDeleteResponseItem
+			var spaceReclaimed uint64
+			for _, item := range pruneResponse.ImagesDeleted {
 				imagesDeleted = append(imagesDeleted, models.ImageDeleteResponseItem{
 					Untagged: item.Untagged,
 					Deleted:  item.Deleted,
 				})
 			}
-			spaceReclaimed += response.SpaceReclaimed
+			spaceReclaimed += pruneResponse.SpaceReclaimed
+			mutex.Lock()
+			response[context] = models.ImagePruneResponse{
+				ImagesDeleted:  imagesDeleted,
+				SpaceReclaimed: spaceReclaimed,
+			}
 			mutex.Unlock()
 			wg.Done()
 		}(context, cli)
 	}
 	wg.Wait()
-	return &models.ImagePruneResponse{
-		ImagesDeleted:  imagesDeleted,
-		SpaceReclaimed: spaceReclaimed,
-	}, nil
+	return &response, nil
 }
 
 // ImagePush - Push an image
 func ImagePush(c *gin.Context, opts *models.ImagePushOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -310,12 +327,12 @@ func ImagePush(c *gin.Context, opts *models.ImagePushOpts) (func(w io.Writer) bo
 	if err != nil {
 		return nil, err
 	}
-	return controllers.StreamResponse(c, response), nil
+	return StreamReadingResponse(c, response), nil
 }
 
 // ImageSearch - Search images
 func ImageSearch(c *gin.Context, opts *models.ImageSearchOpts) (*[]models.ImageSearchResponseItem, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext("default")
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +365,7 @@ func ImageSearch(c *gin.Context, opts *models.ImageSearchOpts) (*[]models.ImageS
 
 // ImageTag - Tag an image
 func ImageTag(c *gin.Context, opts *models.ImageTagOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}

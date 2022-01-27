@@ -5,7 +5,7 @@ import (
 )
 
 func (s *composeService) Events(projectName string, options api.EventsOptions) error {
-	buffer := newBufferedFile()
+	buffer := newEmptyStream()
 	service := getComposeService(s.apiClient, buffer)
 	return service.Events(s.ctx, projectName, options)
 }

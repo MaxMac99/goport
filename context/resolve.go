@@ -1,22 +1,17 @@
-package controllers
+package context
 
 import (
-	"bufio"
-	"io"
-
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/context/docker"
 	"github.com/docker/cli/cli/context/store"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/client"
-	"github.com/gin-gonic/gin"
 	"github.com/moby/term"
-	"gitlab.com/maxmac99/goport/context"
 	"gitlab.com/maxmac99/goport/goport"
 )
 
-func ResolveContext(currentContext string) (client.APIClient, error) {
+func ResolveContext(currentContext string, opts ...client.Opt) (client.APIClient, error) {
 	_, _, stderr := term.StdStreams()
 	configFile := config.LoadDefaultConfigFile(stderr)
 	baseContextStore := store.New(config.ContextStoreDir(), command.DefaultContextStoreConfig())
@@ -58,14 +53,15 @@ func ResolveContext(currentContext string) (client.APIClient, error) {
 	}
 	customHeaders["User-Agent"] = command.UserAgent()
 	clientOpts = append(clientOpts, client.WithHTTPHeaders(customHeaders))
+	clientOpts = append(clientOpts, opts...)
 
 	return client.NewClientWithOpts(clientOpts...)
 }
 
-func ResolveContexts(contexts []string) (map[string]client.APIClient, error) {
+func ResolveContexts(contexts []string, opts ...client.Opt) (map[string]client.APIClient, error) {
 	clients := make(map[string]client.APIClient, len(contexts))
 	if len(contexts) == 0 {
-		client, err := ResolveContext("default")
+		client, err := ResolveContext("default", opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +70,7 @@ func ResolveContexts(contexts []string) (map[string]client.APIClient, error) {
 	}
 	if len(contexts) == 1 && contexts[0] == "all" {
 		server := goport.GetGoPort()
-		allContexts, err := context.ListContext(server)
+		allContexts, err := ListContext(server)
 		if err != nil {
 			return nil, err
 		}
@@ -84,28 +80,11 @@ func ResolveContexts(contexts []string) (map[string]client.APIClient, error) {
 		}
 	}
 	for _, context := range contexts {
-		client, err := ResolveContext(context)
+		client, err := ResolveContext(context, opts...)
 		if err != nil {
 			return nil, err
 		}
 		clients[context] = client
 	}
 	return clients, nil
-}
-
-func StreamResponse(c *gin.Context, r io.ReadCloser) func(w io.Writer) bool {
-	scanner := bufio.NewScanner(r)
-	go func() {
-		<-c.Request.Context().Done()
-		r.Close()
-	}()
-	return func(w io.Writer) bool {
-		if !scanner.Scan() {
-			return false
-		}
-		content := scanner.Bytes()
-		content = append(content, '\n')
-		w.Write(content)
-		return true
-	}
 }

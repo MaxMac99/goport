@@ -11,5 +11,5 @@ package models
 
 type ContextCreateOpts struct {
 	ContextConfig
-	Name string `form:"name"`
+	Name string `uri:"name" binding:"required"`
 }

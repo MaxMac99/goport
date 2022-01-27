@@ -51,6 +51,8 @@ func SystemEventsHandler(c *gin.Context) {
 		return
 	}
 	if response != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(response)
 		return
 	}
@@ -101,16 +103,13 @@ func SystemPingHeadHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
-	response, err := impl.SystemPingHead(c, &opts)
+	err := impl.SystemPingHead(c, &opts)
 	if err != nil {
 		code := errdefs.GetHTTPErrorStatusCode(err)
 		c.JSON(code, err.Error())
 		return
 	}
-	if response != nil {
-		c.JSON(200, response)
-		return
-	}
+	c.Status(200)
 }
 
 // SystemVersion - Get version

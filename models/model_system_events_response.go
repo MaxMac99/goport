@@ -13,5 +13,5 @@ import "github.com/docker/docker/api/types/events"
 
 type SystemEventsResponse struct {
 	events.Message
-	ErrorMessage ErrorResponse `json:"error,omitempty"`
+	ErrorMessage *ErrorResponse `json:"error,omitempty"`
 }

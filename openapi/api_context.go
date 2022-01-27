@@ -21,6 +21,10 @@ import (
 // ContextCreate - Create a context
 func ContextCreateHandler(c *gin.Context) {
 	var opts models.ContextCreateOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -40,6 +44,10 @@ func ContextCreateHandler(c *gin.Context) {
 // ContextDelete - Remove a context
 func ContextDeleteHandler(c *gin.Context) {
 	var opts models.ContextDeleteOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -50,12 +58,16 @@ func ContextDeleteHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ContextInspect - Inspect a context
 func ContextInspectHandler(c *gin.Context) {
 	var opts models.ContextInspectOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -89,6 +101,10 @@ func ContextListHandler(c *gin.Context) {
 // ContextUpdate - Update a context
 func ContextUpdateHandler(c *gin.Context) {
 	var opts models.ContextUpdateOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -99,5 +115,5 @@ func ContextUpdateHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }

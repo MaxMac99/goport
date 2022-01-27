@@ -1,3 +1,5 @@
 FROM alpine
 
-CMD ["echo", "Hello StackOverflow!"]
+ADD script.sh .
+
+CMD ["./script.sh"]

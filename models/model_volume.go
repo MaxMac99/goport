@@ -24,7 +24,7 @@ type Volume struct {
 	CreatedAt string `json:"CreatedAt,omitempty"`
 
 	// Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature.
-	Status map[string]map[string]interface{} `json:"Status,omitempty"`
+	Status map[string]interface{} `json:"Status,omitempty"`
 
 	// User-defined key/value metadata.
 	Labels map[string]string `json:"Labels"`

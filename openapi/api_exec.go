@@ -21,6 +21,14 @@ import (
 // ContainerExec - Create an exec instance
 func ContainerExecHandler(c *gin.Context) {
 	var opts models.ContainerExecOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
+	if err := c.ShouldBindQuery(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -40,6 +48,10 @@ func ContainerExecHandler(c *gin.Context) {
 // ExecInspect - Inspect an exec instance
 func ExecInspectHandler(c *gin.Context) {
 	var opts models.ExecInspectOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -59,6 +71,10 @@ func ExecInspectHandler(c *gin.Context) {
 // ExecResize - Resize an exec instance
 func ExecResizeHandler(c *gin.Context) {
 	var opts models.ExecResizeOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -75,6 +91,14 @@ func ExecResizeHandler(c *gin.Context) {
 // ExecStart - Start an exec instance
 func ExecStartHandler(c *gin.Context) {
 	var opts models.ExecStartOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
+	if err := c.ShouldBindQuery(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -85,5 +109,5 @@ func ExecStartHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }

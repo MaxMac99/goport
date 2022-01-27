@@ -1,43 +1,49 @@
 package impl
 
-type log struct {
-	service   string
-	container string
-	message   string
+type LogObject struct {
+	Log          *LogMessage      `json:"Log,omitempty"`
+	Status       *LogStatus       `json:"Status,omitempty"`
+	Registration *LogRegistration `json:"Register,omitempty"`
 }
 
-type status struct {
-	container string
-	message   string
+type LogMessage struct {
+	Service   string `json:"Service,omitempty"`
+	Container string `json:"Container,omitempty"`
+	Message   string `json:"Message,omitempty"`
 }
 
-type registration struct {
-	container string
+type LogStatus struct {
+	Container string `json:"Container,omitempty"`
+	Message   string `json:"Message,omitempty"`
 }
 
-type logConsumer struct {
-	logChan          chan log
-	statusChan       chan status
-	registrationChan chan registration
+type LogRegistration struct {
+	Container string `json:"Container,omitempty"`
 }
 
-func (l *logConsumer) Log(service, container, message string) {
-	l.logChan <- log{
-		service:   service,
-		container: container,
-		message:   message,
+type LogConsumer struct {
+	logChan          chan LogMessage
+	statusChan       chan LogStatus
+	registrationChan chan LogRegistration
+}
+
+func (l *LogConsumer) Log(service, container, message string) {
+	l.logChan <- LogMessage{
+		Service:   service,
+		Container: container,
+		Message:   message,
 	}
 }
 
-func (l *logConsumer) Status(container, message string) {
-	l.statusChan <- status{
-		container: container,
-		message:   message,
+func (l *LogConsumer) Status(container, message string) {
+	l.statusChan <- LogStatus{
+		Container: container,
+		Message:   message,
 	}
 }
 
-func (l *logConsumer) Register(container string) {
-	l.registrationChan <- registration{
-		container: container,
+func (l *LogConsumer) Register(container string) {
+	l.registrationChan <- LogRegistration{
+		Container: container,
 	}
 }

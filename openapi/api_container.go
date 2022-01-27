@@ -46,6 +46,10 @@ func ContainerChangesHandler(c *gin.Context) {
 // ContainerCreate - Create a container
 func ContainerCreateHandler(c *gin.Context) {
 	var opts models.ContainerCreateOpts
+	if err := c.ShouldBindQuery(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -83,7 +87,7 @@ func ContainerDeleteHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ContainerExport - Export a container
@@ -106,6 +110,8 @@ func ContainerExportHandler(c *gin.Context) {
 		return
 	}
 	if response != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(response)
 		return
 	}
@@ -155,16 +161,12 @@ func ContainerKillHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ContainerList - List containers
 func ContainerListHandler(c *gin.Context) {
 	var opts models.ContainerListOpts
-	if err := c.ShouldBindUri(&opts); err != nil {
-		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
-		return
-	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -203,6 +205,8 @@ func ContainerLogsHandler(c *gin.Context) {
 		return
 	}
 	if response != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(response)
 		return
 	}
@@ -227,16 +231,12 @@ func ContainerPauseHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ContainerPrune - Delete stopped containers
 func ContainerPruneHandler(c *gin.Context) {
 	var opts models.ContainerPruneOpts
-	if err := c.ShouldBindUri(&opts); err != nil {
-		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
-		return
-	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -274,7 +274,7 @@ func ContainerRenameHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ContainerResize - Resize a container TTY
@@ -318,7 +318,7 @@ func ContainerRestartHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ContainerStart - Start a container
@@ -340,7 +340,7 @@ func ContainerStartHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ContainerStats - Get container stats based on resource usage
@@ -363,10 +363,12 @@ func ContainerStatsHandler(c *gin.Context) {
 		return
 	}
 	if response != nil {
-		c.JSON(200, response)
+		c.Data(200, "application/json", response)
 		return
 	}
 	if stream != nil {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(stream)
 		return
 	}
@@ -391,7 +393,7 @@ func ContainerStopHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ContainerTop - List processes running inside a container
@@ -438,13 +440,17 @@ func ContainerUnpauseHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // ContainerUpdate - Update a container
 func ContainerUpdateHandler(c *gin.Context) {
 	var opts models.ContainerUpdateOpts
 	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
+	if err := c.ShouldBindQuery(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}

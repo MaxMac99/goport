@@ -15,20 +15,22 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/compose-spec/compose-go/types"
+	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"gitlab.com/maxmac99/compose/pkg/api"
-	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/context"
 	"gitlab.com/maxmac99/goport/models"
 	"gitlab.com/maxmac99/goport/project"
 )
 
 // ProjectBuild - Build the project
 func ProjectBuild(c *gin.Context, opts *models.ProjectBuildOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -63,12 +65,12 @@ func ProjectBuild(c *gin.Context, opts *models.ProjectBuildOpts) (func(w io.Writ
 		return nil, nil
 	}
 
-	return controllers.StreamResponse(c, reader), nil
+	return StreamResponse(c, reader), nil
 }
 
 // ProjectCreate - Create a project
 func ProjectCreate(c *gin.Context, opts *models.ProjectCreateOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext("default")
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func ProjectCreate(c *gin.Context, opts *models.ProjectCreateOpts) error {
 
 // ProjectDown - Stops containers and removes containers, networks, volumes, and images created by up
 func ProjectDown(c *gin.Context, opts *models.ProjectDownOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -104,12 +106,16 @@ func ProjectDown(c *gin.Context, opts *models.ProjectDownOpts) error {
 	if err != nil && err != os.ErrNotExist {
 		return err
 	}
+	name := opts.Name
 	if err == os.ErrNotExist {
 		err = nil
+		name = project.Name
 	}
 	var timeout *time.Duration
 	if opts.Timeout != nil {
-		*timeout, err = time.ParseDuration(strconv.FormatInt(*opts.Timeout, 10) + "s")
+		timeoutStr := strconv.FormatInt(*opts.Timeout, 10)
+		timeoutValue, err := time.ParseDuration(timeoutStr + "s")
+		timeout = &timeoutValue
 		if err != nil {
 			return err
 		}
@@ -121,17 +127,12 @@ func ProjectDown(c *gin.Context, opts *models.ProjectDownOpts) error {
 		Images:        opts.Rmi,
 		Volumes:       opts.Volumes,
 	}
-	if err == nil {
-		_, err = service.Down(project.Name, downOptions)
-		return err
-	}
-	_, err = service.Down(opts.Name, downOptions)
-	return err
+	return service.Down(name, downOptions)
 }
 
 // ProjectEvents - Stream container events for every container in the project
 func ProjectEvents(c *gin.Context, opts *models.ProjectEventsOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +201,7 @@ func ProjectEvents(c *gin.Context, opts *models.ProjectEventsOpts) (func(w io.Wr
 
 // ProjectImages - List images used by the created containers.
 func ProjectImages(c *gin.Context, opts *models.ProjectImagesOpts) ([]models.ProjectImagesResponse, error) {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +237,7 @@ func ProjectImages(c *gin.Context, opts *models.ProjectImagesOpts) ([]models.Pro
 
 // ProjectInspect - Inspect a project
 func ProjectInspect(c *gin.Context, opts *models.ProjectInspectOpts) ([]byte, error) {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -244,19 +245,16 @@ func ProjectInspect(c *gin.Context, opts *models.ProjectInspectOpts) ([]byte, er
 	project, err := project.GetProject(opts.Name)
 	if err != nil && err != os.ErrNotExist {
 		return nil, err
-	} else if err == os.ErrNotExist {
-		err = nil
 	}
-	response, err := service.Convert(project, api.ConvertOptions{
+	return service.Convert(project, api.ConvertOptions{
 		Format: opts.Format,
 		Output: "",
 	})
-	return response, err
 }
 
 // ProjectKill - Forces running containers to stop by sending a SIGKILL signal.
 func ProjectKill(c *gin.Context, opts *models.ProjectKillOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -264,28 +262,68 @@ func ProjectKill(c *gin.Context, opts *models.ProjectKillOpts) error {
 	project, err := project.GetProject(opts.Name)
 	if err != nil && err != os.ErrNotExist {
 		return err
-	} else if err == os.ErrNotExist {
-		err = nil
 	}
-	_, err = service.Kill(project, api.KillOptions{
+	return service.Kill(project, api.KillOptions{
 		Services: opts.Services,
 		Signal:   opts.Signal,
 	})
-	return err
 }
 
 // ProjectList - List projects
-func ProjectList(c *gin.Context) ([]project.Stack, error) {
-	stacks, err := project.GetStacks()
+func ProjectList(c *gin.Context, opts *models.ProjectListOpts) (map[string][]project.Stack, error) {
+	isLocal := len(opts.Context) == 0
+	contexts := opts.Context
+	for _, context := range opts.Context {
+		if context == "local" {
+			isLocal = true
+		} else {
+			contexts = append(contexts, context)
+		}
+	}
+	clients, err := context.ResolveContexts(contexts)
 	if err != nil {
 		return nil, err
 	}
-	return stacks, nil
+	numObjects := len(clients)
+	if isLocal {
+		numObjects += 1
+	}
+	output := make(map[string][]project.Stack, len(clients))
+
+	if isLocal {
+		stacks, err := project.GetStacks()
+		if err != nil {
+			return nil, err
+		}
+		output["local"] = stacks
+	}
+
+	var mutex sync.RWMutex
+	var wg sync.WaitGroup
+	wg.Add(len(clients))
+	for context, cli := range clients {
+		go func(context string, cli client.APIClient) {
+			service := project.GetProjectService(cli, c)
+			stacks, err := service.GetActiveStacks(api.ListOptions{
+				All: opts.All,
+			})
+			if err != nil {
+				wg.Done()
+				return
+			}
+			mutex.Lock()
+			output[context] = stacks
+			mutex.Unlock()
+			wg.Done()
+		}(context, cli)
+	}
+	wg.Wait()
+	return output, nil
 }
 
 // ProjectLogs - Get project logs
-func ProjectLogs(c *gin.Context, opts *models.ProjectLogsOpts) ([]map[string]interface{}, func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext("default")
+func ProjectLogs(c *gin.Context, opts *models.ProjectLogsOpts) ([]LogObject, func(w io.Writer) bool, error) {
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -311,10 +349,10 @@ func ProjectLogs(c *gin.Context, opts *models.ProjectLogsOpts) ([]map[string]int
 func ProjectLogsStream(c *gin.Context, name string, service project.ProjectService, opts *models.ProjectLogsOpts) func(w io.Writer) bool {
 	doneChan := make(chan bool)
 	errChan := make(chan error)
-	consumer := logConsumer{
-		logChan:          make(chan log),
-		statusChan:       make(chan status),
-		registrationChan: make(chan registration),
+	consumer := LogConsumer{
+		logChan:          make(chan LogMessage),
+		statusChan:       make(chan LogStatus),
+		registrationChan: make(chan LogRegistration),
 	}
 	go func() {
 		err := service.Logs(name, &consumer, api.LogOptions{
@@ -338,10 +376,11 @@ func ProjectLogsStream(c *gin.Context, name string, service project.ProjectServi
 		case <-doneChan:
 			return false
 		case logItem := <-consumer.logChan:
-			message := map[string]log{
-				"log": logItem,
+			message := LogObject{
+				Log: &logItem,
 			}
 			b, err := json.Marshal(message)
+			b = append(b, '\n')
 			if err != nil {
 				WriteError(err, w)
 			} else {
@@ -349,10 +388,11 @@ func ProjectLogsStream(c *gin.Context, name string, service project.ProjectServi
 			}
 			return true
 		case statusItem := <-consumer.statusChan:
-			message := map[string]status{
-				"status": statusItem,
+			message := LogObject{
+				Status: &statusItem,
 			}
 			b, err := json.Marshal(message)
+			b = append(b, '\n')
 			if err != nil {
 				WriteError(err, w)
 			} else {
@@ -360,10 +400,11 @@ func ProjectLogsStream(c *gin.Context, name string, service project.ProjectServi
 			}
 			return true
 		case registerItem := <-consumer.registrationChan:
-			message := map[string]registration{
-				"register": registerItem,
+			message := LogObject{
+				Registration: &registerItem,
 			}
 			b, err := json.Marshal(message)
+			b = append(b, '\n')
 			if err != nil {
 				WriteError(err, w)
 			} else {
@@ -376,13 +417,13 @@ func ProjectLogsStream(c *gin.Context, name string, service project.ProjectServi
 	}
 }
 
-func ProjectLogsResponse(name string, service project.ProjectService, opts *models.ProjectLogsOpts) ([]map[string]interface{}, error) {
+func ProjectLogsResponse(name string, service project.ProjectService, opts *models.ProjectLogsOpts) ([]LogObject, error) {
 	doneChan := make(chan bool)
 	errChan := make(chan error)
-	consumer := logConsumer{
-		logChan:          make(chan log),
-		statusChan:       make(chan status),
-		registrationChan: make(chan registration),
+	consumer := LogConsumer{
+		logChan:          make(chan LogMessage),
+		statusChan:       make(chan LogStatus),
+		registrationChan: make(chan LogRegistration),
 	}
 	go func() {
 		err := service.Logs(name, &consumer, api.LogOptions{
@@ -398,7 +439,7 @@ func ProjectLogsResponse(name string, service project.ProjectService, opts *mode
 		}
 		doneChan <- true
 	}()
-	var allLogs []map[string]interface{}
+	var allLogs []LogObject
 	for {
 		select {
 		case err := <-errChan:
@@ -406,18 +447,18 @@ func ProjectLogsResponse(name string, service project.ProjectService, opts *mode
 		case <-doneChan:
 			return allLogs, nil
 		case logItem := <-consumer.logChan:
-			message := map[string]interface{}{
-				"log": logItem,
+			message := LogObject{
+				Log: &logItem,
 			}
 			allLogs = append(allLogs, message)
 		case statusItem := <-consumer.statusChan:
-			message := map[string]interface{}{
-				"status": statusItem,
+			message := LogObject{
+				Status: &statusItem,
 			}
 			allLogs = append(allLogs, message)
 		case registerItem := <-consumer.registrationChan:
-			message := map[string]interface{}{
-				"register": registerItem,
+			message := LogObject{
+				Registration: &registerItem,
 			}
 			allLogs = append(allLogs, message)
 		}
@@ -426,7 +467,7 @@ func ProjectLogsResponse(name string, service project.ProjectService, opts *mode
 
 // ProjectPause - Pauses running containers of a service.
 func ProjectPause(c *gin.Context, opts *models.ProjectPauseOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -438,18 +479,15 @@ func ProjectPause(c *gin.Context, opts *models.ProjectPauseOpts) error {
 	name := opts.Name
 	if err == nil {
 		name = project.Name
-	} else {
-		err = nil
 	}
-	_, err = service.Pause(name, api.PauseOptions{
+	return service.Pause(name, api.PauseOptions{
 		Services: opts.Services,
 	})
-	return err
 }
 
 // ProjectPs - Lists containers.
 func ProjectPs(c *gin.Context, opts *models.ProjectPsOpts) (*[]models.ProjectContainerSummaryItem, error) {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -500,7 +538,7 @@ func ProjectPs(c *gin.Context, opts *models.ProjectPsOpts) (*[]models.ProjectCon
 
 // ProjectPull - Pulls images associated with a service.
 func ProjectPull(c *gin.Context, opts *models.ProjectPullOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -521,12 +559,12 @@ func ProjectPull(c *gin.Context, opts *models.ProjectPullOpts) (func(w io.Writer
 	if opts.Quiet {
 		return nil, nil
 	}
-	return controllers.StreamResponse(c, reader), nil
+	return StreamResponse(c, reader), nil
 }
 
 // ProjectPush - Pushes images for services to their respective `registry/repository`.
 func ProjectPush(c *gin.Context, opts *models.ProjectPushOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -534,18 +572,15 @@ func ProjectPush(c *gin.Context, opts *models.ProjectPushOpts) error {
 	project, err := project.GetProject(opts.Name)
 	if err != nil && err != os.ErrNotExist {
 		return err
-	} else if err == os.ErrNotExist {
-		err = nil
 	}
-	_, err = service.Push(project, api.PushOptions{
+	return service.Push(project, api.PushOptions{
 		IgnoreFailures: opts.IgnorePushFailures,
 	})
-	return err
 }
 
 // ProjectRemove - Removes stopped service containers.
 func ProjectRemove(c *gin.Context, opts *models.ProjectRemoveOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -553,20 +588,17 @@ func ProjectRemove(c *gin.Context, opts *models.ProjectRemoveOpts) error {
 	project, err := project.GetProject(opts.Name)
 	if err != nil && err != os.ErrNotExist {
 		return err
-	} else if err == os.ErrNotExist {
-		err = nil
 	}
-	_, err = service.Remove(project, api.RemoveOptions{
+	return service.Remove(project, api.RemoveOptions{
 		Volumes:  opts.Volumes,
 		Force:    true,
 		Services: opts.Services,
 	})
-	return err
 }
 
 // ProjectRestart - Restarts all stopped and running services.
 func ProjectRestart(c *gin.Context, opts *models.ProjectRestartOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -579,21 +611,22 @@ func ProjectRestart(c *gin.Context, opts *models.ProjectRestartOpts) error {
 	}
 	var timeout *time.Duration
 	if opts.Timeout != nil {
-		*timeout, err = time.ParseDuration(strconv.FormatInt(*opts.Timeout, 10) + "s")
+		timeoutStr := strconv.FormatInt(*opts.Timeout, 10)
+		timeoutValue, err := time.ParseDuration(timeoutStr + "s")
+		timeout = &timeoutValue
 		if err != nil {
 			return err
 		}
 	}
-	_, err = service.Restart(project, api.RestartOptions{
+	return service.Restart(project, api.RestartOptions{
 		Timeout:  timeout,
 		Services: opts.Services,
 	})
-	return err
 }
 
 // ProjectRun - Runs a one-time command against a service.
-func ProjectRun(c *gin.Context, opts *models.ProjectRunOpts) (func(w io.Writer) bool, []map[string]interface{}, error) {
-	client, err := controllers.ResolveContext("default")
+func ProjectRun(c *gin.Context, opts *models.ProjectRunOpts) (func(w io.Writer) bool, map[string]interface{}, error) {
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -608,52 +641,38 @@ func ProjectRun(c *gin.Context, opts *models.ProjectRunOpts) (func(w io.Writer) 
 		response, err := ProjectRunResponse(c, service, project, opts)
 		return nil, response, err
 	}
-	return nil, nil, err
+	return ProjectRunStream(c, service, project, opts), nil, err
 }
 
-func ProjectRunResponse(c *gin.Context, service project.ProjectService, project *types.Project, opts *models.ProjectRunOpts) ([]map[string]interface{}, error) {
-	outputChan := make(chan map[string]interface{})
-	outBuffer := newStream("stdout", outputChan)
-	errBuffer := newStream("stderr", outputChan)
-
-	var output []map[string]interface{}
-	go func() {
-		for {
-			select {
-			case entry, ok := <-outputChan:
-				if !ok {
-					return
-				}
-				output = append(output, entry)
-			case <-c.Request.Context().Done():
-				return
-			}
-		}
-	}()
-
+func ProjectRunResponse(c *gin.Context, service project.ProjectService, project *types.Project, opts *models.ProjectRunOpts) (map[string]interface{}, error) {
+	stream := newSingleStringReader()
 	code, err := service.Run(project, api.RunOptions{
-		Name:              opts.Body.Name,
+		Name:              opts.ContainerName,
 		Service:           opts.Service,
-		Command:           opts.Body.Command,
-		Entrypoint:        opts.Body.Entrypoint,
+		Command:           opts.Command,
+		Entrypoint:        opts.Entrypoint,
 		Detach:            opts.Detach,
 		AutoRemove:        opts.AutoRemove,
 		Stdin:             nil,
-		Stdout:            outBuffer,
-		Stderr:            errBuffer,
-		Tty:               opts.Body.Tty,
-		WorkingDir:        opts.Body.Workdir,
-		User:              opts.Body.User,
-		Environment:       opts.Body.Environment,
-		Labels:            opts.Body.Labels,
-		UseNetworkAliases: opts.Body.UseAliases,
-		NoDeps:            !opts.Body.Deps,
+		Stdout:            &stream,
+		Stderr:            &stream,
+		Tty:               opts.Tty,
+		WorkingDir:        opts.Workdir,
+		User:              opts.User,
+		Environment:       opts.Environment,
+		Labels:            opts.Labels,
+		UseNetworkAliases: opts.UseAliases,
+		NoDeps:            !opts.Deps,
 		Index:             0,
 	})
-	close(outputChan)
-	output = append(output, map[string]interface{}{
-		"return": code,
-	})
+	containerId := stream.out
+	if last := len(containerId) - 1; last >= 0 && containerId[last] == '\n' {
+		containerId = containerId[:last]
+	}
+	output := map[string]interface{}{
+		"containerId": containerId,
+		"return":      code,
+	}
 	return output, err
 }
 
@@ -663,28 +682,29 @@ type runResponse struct {
 }
 
 func ProjectRunStream(c *gin.Context, service project.ProjectService, project *types.Project, opts *models.ProjectRunOpts) func(w io.Writer) bool {
+	inReader := newEmptyReader()
 	outBuffer := newChannelBuffer()
 	errBuffer := newChannelBuffer()
 	returnChan := make(chan runResponse)
 
 	go func() {
 		code, err := service.Run(project, api.RunOptions{
-			Name:              opts.Body.Name,
+			Name:              opts.ContainerName,
 			Service:           opts.Service,
-			Command:           opts.Body.Command,
-			Entrypoint:        opts.Body.Entrypoint,
+			Command:           opts.Command,
+			Entrypoint:        opts.Entrypoint,
 			Detach:            opts.Detach,
 			AutoRemove:        opts.AutoRemove,
-			Stdin:             nil,
+			Stdin:             &inReader,
 			Stdout:            &outBuffer,
 			Stderr:            &errBuffer,
-			Tty:               opts.Body.Tty,
-			WorkingDir:        opts.Body.Workdir,
-			User:              opts.Body.User,
-			Environment:       opts.Body.Environment,
-			Labels:            opts.Body.Labels,
-			UseNetworkAliases: opts.Body.UseAliases,
-			NoDeps:            !opts.Body.Deps,
+			Tty:               opts.Tty,
+			WorkingDir:        opts.Workdir,
+			User:              opts.User,
+			Environment:       opts.Environment,
+			Labels:            opts.Labels,
+			UseNetworkAliases: opts.UseAliases,
+			NoDeps:            !opts.Deps,
 			Index:             0,
 		})
 		returnChan <- runResponse{
@@ -694,56 +714,46 @@ func ProjectRunStream(c *gin.Context, service project.ProjectService, project *t
 	}()
 
 	return func(w io.Writer) bool {
+		var message map[string]interface{}
+		done := false
 		select {
 		case output := <-outBuffer.out:
-			message := map[string]interface{}{
-				"stdout": string(output),
+			message = map[string]interface{}{
+				"stdout": output,
 			}
-			b, err := json.Marshal(message)
-			if err != nil {
-				WriteError(err, w)
-			} else {
-				w.Write(b)
-			}
-			return true
 		case errorMessage := <-errBuffer.out:
-			message := map[string]interface{}{
-				"stderr": string(errorMessage),
+			message = map[string]interface{}{
+				"stderr": errorMessage,
 			}
-			b, err := json.Marshal(message)
-			if err != nil {
-				WriteError(err, w)
-			} else {
-				w.Write(b)
-			}
-			return true
 		case returnMessage := <-returnChan:
 			outBuffer.Close()
 			errBuffer.Close()
-			message := map[string]interface{}{
+			message = map[string]interface{}{
 				"returnCode": returnMessage.code,
 			}
 			if returnMessage.err != nil {
 				message["error"] = returnMessage.err.Error()
 			}
-			b, err := json.Marshal(message)
-			if err != nil {
-				WriteError(err, w)
-			} else {
-				w.Write(b)
-			}
-			return false
+			done = true
 		case <-c.Request.Context().Done():
 			outBuffer.Close()
 			errBuffer.Close()
 			return false
 		}
+		b, err := json.Marshal(message)
+		b = append(b, '\n')
+		if err != nil {
+			WriteError(err, w)
+		} else {
+			w.Write(b)
+		}
+		return !done
 	}
 }
 
 // ProjectStart - Starts existing containers for a service.
 func ProjectStart(c *gin.Context, opts *models.ProjectStartOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -759,13 +769,12 @@ func ProjectStart(c *gin.Context, opts *models.ProjectStartOpts) error {
 			return err
 		}
 	}
-	_, err = service.Start(project, api.StartOptions{})
-	return err
+	return service.Start(project, api.StartOptions{Wait: true})
 }
 
 // ProjectStop - Stops running containers without removing them.
 func ProjectStop(c *gin.Context, opts *models.ProjectStopOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -783,21 +792,22 @@ func ProjectStop(c *gin.Context, opts *models.ProjectStopOpts) error {
 	}
 	var timeout *time.Duration
 	if opts.Timeout != nil {
-		*timeout, err = time.ParseDuration(strconv.FormatInt(*opts.Timeout, 10) + "s")
+		timeoutStr := strconv.FormatInt(*opts.Timeout, 10)
+		timeoutValue, err := time.ParseDuration(timeoutStr + "s")
+		timeout = &timeoutValue
 		if err != nil {
 			return err
 		}
 	}
-	_, err = service.Stop(project, api.StopOptions{
+	return service.Stop(project, api.StopOptions{
 		Timeout:  timeout,
 		Services: opts.Services,
 	})
-	return err
 }
 
 // ProjectTop - Displays the running processes.
 func ProjectTop(c *gin.Context, opts *models.ProjectTopOpts) (*[]models.ProjectTopResponse, error) {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -830,7 +840,7 @@ func ProjectTop(c *gin.Context, opts *models.ProjectTopOpts) (*[]models.ProjectT
 
 // ProjectUnpause - Unpauses paused containers of a service.
 func ProjectUnpause(c *gin.Context, opts *models.ProjectUnpauseOpts) error {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -845,15 +855,14 @@ func ProjectUnpause(c *gin.Context, opts *models.ProjectUnpauseOpts) error {
 	} else {
 		err = nil
 	}
-	_, err = service.Unpause(name, api.PauseOptions{
+	return service.Unpause(name, api.PauseOptions{
 		Services: opts.Services,
 	})
-	return err
 }
 
 // ProjectUp - Builds, (re)creates, starts, and attaches to containers for a service.
 func ProjectUp(c *gin.Context, opts *models.ProjectUpOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext("default")
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -877,7 +886,9 @@ func ProjectUp(c *gin.Context, opts *models.ProjectUpOpts) (func(w io.Writer) bo
 	}
 	var timeout *time.Duration
 	if opts.Timeout != nil {
-		*timeout, err = time.ParseDuration(strconv.FormatInt(*opts.Timeout, 10) + "s")
+		timeoutStr := strconv.FormatInt(*opts.Timeout, 10)
+		timeoutValue, err := time.ParseDuration(timeoutStr + "s")
+		timeout = &timeoutValue
 		if err != nil {
 			return nil, err
 		}
@@ -909,21 +920,20 @@ func ProjectUp(c *gin.Context, opts *models.ProjectUpOpts) (func(w io.Writer) bo
 }
 
 func ProjectUpResponse(service project.ProjectService, project *types.Project, opts api.UpOptions) error {
-	_, err := service.Up(project, opts)
-	return err
+	return service.Up(project, opts)
 }
 
 func ProjectUpStream(c *gin.Context, service project.ProjectService, project *types.Project, opts api.UpOptions) func(w io.Writer) bool {
 	doneChan := make(chan bool)
 	errChan := make(chan error)
-	consumer := logConsumer{
-		logChan:          make(chan log),
-		statusChan:       make(chan status),
-		registrationChan: make(chan registration),
+	consumer := LogConsumer{
+		logChan:          make(chan LogMessage),
+		statusChan:       make(chan LogStatus),
+		registrationChan: make(chan LogRegistration),
 	}
 	opts.Start.Attach = &consumer
 	go func() {
-		_, err := service.Up(project, opts)
+		err := service.Up(project, opts)
 		if err != nil {
 			errChan <- err
 		}
@@ -937,10 +947,11 @@ func ProjectUpStream(c *gin.Context, service project.ProjectService, project *ty
 		case <-doneChan:
 			return false
 		case logItem := <-consumer.logChan:
-			message := map[string]log{
-				"log": logItem,
+			message := LogObject{
+				Log: &logItem,
 			}
 			b, err := json.Marshal(message)
+			b = append(b, '\n')
 			if err != nil {
 				WriteError(err, w)
 			} else {
@@ -948,10 +959,11 @@ func ProjectUpStream(c *gin.Context, service project.ProjectService, project *ty
 			}
 			return true
 		case statusItem := <-consumer.statusChan:
-			message := map[string]status{
-				"status": statusItem,
+			message := LogObject{
+				Status: &statusItem,
 			}
 			b, err := json.Marshal(message)
+			b = append(b, '\n')
 			if err != nil {
 				WriteError(err, w)
 			} else {
@@ -959,10 +971,11 @@ func ProjectUpStream(c *gin.Context, service project.ProjectService, project *ty
 			}
 			return true
 		case registerItem := <-consumer.registrationChan:
-			message := map[string]registration{
-				"register": registerItem,
+			message := LogObject{
+				Registration: &registerItem,
 			}
 			b, err := json.Marshal(message)
+			b = append(b, '\n')
 			if err != nil {
 				WriteError(err, w)
 			} else {

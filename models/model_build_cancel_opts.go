@@ -9,6 +9,7 @@
 
 package models
 
-type SystemPingOpts struct {
-	Context []string `form:"context"`
+type BuildCancelOpts struct {
+	Context string `form:"context"`
+	Id      string `form:"id"`
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func (s *composeService) Run(project *types.Project, options api.RunOptions) (int, error) {
-	buffer := newBufferedFile()
+	buffer := newEmptyStream()
 	service := getComposeService(s.apiClient, buffer)
 	return service.RunOneOffContainer(s.ctx, project, options)
 }

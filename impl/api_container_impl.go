@@ -10,7 +10,6 @@
 package impl
 
 import (
-	"encoding/json"
 	"io"
 	"strconv"
 	"sync"
@@ -21,13 +20,13 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
-	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/context"
 	"gitlab.com/maxmac99/goport/models"
 )
 
 // ContainerChanges - Get changes on a container’s filesystem
 func ContainerChanges(c *gin.Context, opts *models.ContainerChangesOpts) (*[]models.ContainerChangeResponseItem, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +34,7 @@ func ContainerChanges(c *gin.Context, opts *models.ContainerChangesOpts) (*[]mod
 	if err != nil {
 		return nil, err
 	}
-	var response []models.ContainerChangeResponseItem
+	response := make([]models.ContainerChangeResponseItem, 0)
 	for _, item := range diff {
 		response = append(response, models.ContainerChangeResponseItem{
 			Path: item.Path,
@@ -47,7 +46,7 @@ func ContainerChanges(c *gin.Context, opts *models.ContainerChangesOpts) (*[]mod
 
 // ContainerCreate - Create a container
 func ContainerCreate(c *gin.Context, opts *models.ContainerCreateOpts) (*models.ContainerCreateResponse, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +66,7 @@ func ContainerCreate(c *gin.Context, opts *models.ContainerCreateOpts) (*models.
 
 // ContainerDelete - Remove a container
 func ContainerDelete(c *gin.Context, opts *models.ContainerDeleteOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -81,7 +80,7 @@ func ContainerDelete(c *gin.Context, opts *models.ContainerDeleteOpts) error {
 
 // ContainerExport - Export a container
 func ContainerExport(c *gin.Context, opts *models.ContainerExportOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -96,21 +95,22 @@ func ContainerExport(c *gin.Context, opts *models.ContainerExportOpts) (func(w i
 }
 
 // ContainerInspect - Inspect a container
-func ContainerInspect(c *gin.Context, opts *models.ContainerInspectOpts) (*types.ContainerJSON, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+func ContainerInspect(c *gin.Context, opts *models.ContainerInspectOpts) (*models.ContainerInspectResponse, error) {
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
 	inspect, err := client.ContainerInspect(c, opts.Id)
+	response := models.MapToContainerInspectResponse(inspect)
 	if err != nil {
 		return nil, err
 	}
-	return &inspect, nil
+	return &response, nil
 }
 
 // ContainerKill - Kill a container
 func ContainerKill(c *gin.Context, opts *models.ContainerKillOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func ContainerKill(c *gin.Context, opts *models.ContainerKillOpts) error {
 
 // ContainerList - List containers
 func ContainerList(c *gin.Context, opts *models.ContainerListOpts) (*map[string][]models.ContainerSummary, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func ContainerList(c *gin.Context, opts *models.ContainerListOpts) (*map[string]
 
 // ContainerLogs - Get container logs
 func ContainerLogs(c *gin.Context, opts *models.ContainerLogsOpts) (func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -183,12 +183,12 @@ func ContainerLogs(c *gin.Context, opts *models.ContainerLogsOpts) (func(w io.Wr
 	if err != nil {
 		return nil, err
 	}
-	return controllers.StreamResponse(c, reader), nil
+	return StreamReadingResponse(c, reader), nil
 }
 
 // ContainerPause - Pause a container
 func ContainerPause(c *gin.Context, opts *models.ContainerPauseOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -196,8 +196,8 @@ func ContainerPause(c *gin.Context, opts *models.ContainerPauseOpts) error {
 }
 
 // ContainerPrune - Delete stopped containers
-func ContainerPrune(c *gin.Context, opts *models.ContainerPruneOpts) (*models.ContainerPruneResponse, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+func ContainerPrune(c *gin.Context, opts *models.ContainerPruneOpts) (*map[string]models.ContainerPruneResponse, error) {
+	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -206,8 +206,7 @@ func ContainerPrune(c *gin.Context, opts *models.ContainerPruneOpts) (*models.Co
 		return nil, err
 	}
 
-	var deletedContainers []string
-	var reclaimedSpace uint64 = 0
+	response := make(map[string]models.ContainerPruneResponse, len(clients))
 	var mutex sync.RWMutex
 	var wg sync.WaitGroup
 	wg.Add(len(clients))
@@ -219,22 +218,21 @@ func ContainerPrune(c *gin.Context, opts *models.ContainerPruneOpts) (*models.Co
 				return
 			}
 			mutex.Lock()
-			deletedContainers = append(deletedContainers, prune.ContainersDeleted...)
-			reclaimedSpace += prune.SpaceReclaimed
+			response[context] = models.ContainerPruneResponse{
+				ContainersDeleted: prune.ContainersDeleted,
+				SpaceReclaimed:    int64(prune.SpaceReclaimed),
+			}
 			mutex.Unlock()
 			wg.Done()
 		}(context, cli)
 	}
 	wg.Wait()
-	return &models.ContainerPruneResponse{
-		ContainersDeleted: deletedContainers,
-		SpaceReclaimed:    int64(reclaimedSpace),
-	}, nil
+	return &response, nil
 }
 
 // ContainerRename - Rename a container
 func ContainerRename(c *gin.Context, opts *models.ContainerRenameOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -243,7 +241,7 @@ func ContainerRename(c *gin.Context, opts *models.ContainerRenameOpts) error {
 
 // ContainerResize - Resize a container TTY
 func ContainerResize(c *gin.Context, opts *models.ContainerResizeOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -256,7 +254,7 @@ func ContainerResize(c *gin.Context, opts *models.ContainerResizeOpts) error {
 
 // ContainerRestart - Restart a container
 func ContainerRestart(c *gin.Context, opts *models.ContainerRestartOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -269,7 +267,7 @@ func ContainerRestart(c *gin.Context, opts *models.ContainerRestartOpts) error {
 
 // ContainerStart - Start a container
 func ContainerStart(c *gin.Context, opts *models.ContainerStartOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -281,8 +279,8 @@ func ContainerStart(c *gin.Context, opts *models.ContainerStartOpts) error {
 }
 
 // ContainerStats - Get container stats based on resource usage
-func ContainerStats(c *gin.Context, opts *models.ContainerStatsOpts) (*models.ContainerStatsResponse, func(w io.Writer) bool, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+func ContainerStats(c *gin.Context, opts *models.ContainerStatsOpts) ([]byte, func(w io.Writer) bool, error) {
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -301,19 +299,14 @@ func ContainerStats(c *gin.Context, opts *models.ContainerStatsOpts) (*models.Co
 		if err != nil {
 			return nil, nil, err
 		}
-		var result models.ContainerStatsResponse
-		err = json.Unmarshal(data, &result)
-		if err != nil {
-			return nil, nil, err
-		}
-		return &result, nil, nil
+		return data, nil, nil
 	}
-	return nil, controllers.StreamResponse(c, response.Body), nil
+	return nil, StreamReadingResponse(c, response.Body), nil
 }
 
 // ContainerStop - Stop a container
 func ContainerStop(c *gin.Context, opts *models.ContainerStopOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -326,7 +319,7 @@ func ContainerStop(c *gin.Context, opts *models.ContainerStopOpts) error {
 
 // ContainerTop - List processes running inside a container
 func ContainerTop(c *gin.Context, opts *models.ContainerTopOpts) (*models.ContainerTopResponse, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -343,7 +336,7 @@ func ContainerTop(c *gin.Context, opts *models.ContainerTopOpts) (*models.Contai
 
 // ContainerUnpause - Unpause a container
 func ContainerUnpause(c *gin.Context, opts *models.ContainerUnpauseOpts) error {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return err
 	}
@@ -352,7 +345,7 @@ func ContainerUnpause(c *gin.Context, opts *models.ContainerUnpauseOpts) error {
 
 // ContainerUpdate - Update a container
 func ContainerUpdate(c *gin.Context, opts *models.ContainerUpdateOpts) (*models.ContainerUpdateResponse, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -368,18 +361,22 @@ func ContainerUpdate(c *gin.Context, opts *models.ContainerUpdateOpts) (*models.
 
 // ContainerWait - Wait for a container
 func ContainerWait(c *gin.Context, opts *models.ContainerWaitOpts) (*models.ContainerWaitResponse, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context)
 	if err != nil {
 		return nil, err
 	}
 	responseC, errC := client.ContainerWait(c, opts.Id, container.WaitCondition(opts.Condition))
 	select {
 	case response := <-responseC:
+		var errorResponse *models.ContainerWaitResponseError = nil
+		if response.Error != nil {
+			errorResponse = &models.ContainerWaitResponseError{
+				Message: response.Error.Message,
+			}
+		}
 		return &models.ContainerWaitResponse{
 			StatusCode: response.StatusCode,
-			Error: models.ContainerWaitResponseError{
-				Message: response.Error.Message,
-			},
+			Error:      errorResponse,
 		}, nil
 	case err = <-errC:
 		return nil, err

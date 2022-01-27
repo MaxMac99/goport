@@ -15,5 +15,5 @@ type ContainerWaitResponse struct {
 	// Exit code of the container
 	StatusCode int64 `json:"StatusCode"`
 
-	Error ContainerWaitResponseError `json:"Error,omitempty"`
+	Error *ContainerWaitResponseError `json:"Error,omitempty"`
 }

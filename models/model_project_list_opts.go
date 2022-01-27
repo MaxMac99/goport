@@ -9,6 +9,7 @@
 
 package models
 
-type SystemPingOpts struct {
+type ProjectListOpts struct {
 	Context []string `form:"context"`
+	All     bool     `form:"all,default=false"`
 }

@@ -1,7 +1,4 @@
-{
-  "services": {
-    "test2": {
-      "image": "hello-world"
-    }
-  }
-}
+version: "3.9"
+services:
+  test2:
+    image: hello-world

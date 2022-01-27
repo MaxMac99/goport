@@ -21,6 +21,10 @@ import (
 // VolumeCreate - Create a volume
 func VolumeCreateHandler(c *gin.Context) {
 	var opts models.VolumeCreateOpts
+	if err := c.ShouldBindQuery(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -40,6 +44,10 @@ func VolumeCreateHandler(c *gin.Context) {
 // VolumeDelete - Remove a volume
 func VolumeDeleteHandler(c *gin.Context) {
 	var opts models.VolumeDeleteOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -50,12 +58,16 @@ func VolumeDeleteHandler(c *gin.Context) {
 		c.JSON(code, err.Error())
 		return
 	}
-	c.JSON(204, gin.H{})
+	c.Status(204)
 }
 
 // VolumeInspect - Inspect a volume
 func VolumeInspectHandler(c *gin.Context) {
 	var opts models.VolumeInspectOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return

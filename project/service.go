@@ -2,7 +2,6 @@ package project
 
 import (
 	"context"
-	"io"
 
 	"github.com/compose-spec/compose-go/types"
 	"github.com/containerd/console"
@@ -14,26 +13,26 @@ import (
 
 type ProjectService interface {
 	GetContext() context.Context
-	Build(project *types.Project, options api.BuildOptions) (io.ReadCloser, error)
+	Build(project *types.Project, options api.BuildOptions) (Stream, error)
 	GetActiveStacks(opts api.ListOptions) ([]Stack, error)
 	Convert(project *types.Project, options api.ConvertOptions) ([]byte, error)
-	Down(projectName string, options api.DownOptions) (io.ReadCloser, error)
+	Down(projectName string, options api.DownOptions) error
 	Events(projectName string, options api.EventsOptions) error
 	Images(projectName string, options api.ImagesOptions) ([]api.ImageSummary, error)
-	Kill(project *types.Project, opts api.KillOptions) (io.ReadCloser, error)
+	Kill(project *types.Project, opts api.KillOptions) error
 	Logs(projectName string, consumer api.LogConsumer, options api.LogOptions) error
-	Pause(projectName string, options api.PauseOptions) (io.WriteCloser, error)
+	Pause(projectName string, options api.PauseOptions) error
 	Ps(projectName string, options api.PsOptions) ([]api.ContainerSummary, error)
-	Pull(project *types.Project, options api.PullOptions) (io.ReadCloser, error)
-	Push(project *types.Project, options api.PushOptions) (io.ReadCloser, error)
-	Remove(project *types.Project, options api.RemoveOptions) (io.ReadCloser, error)
-	Restart(project *types.Project, options api.RestartOptions) (io.ReadCloser, error)
+	Pull(project *types.Project, options api.PullOptions) (Stream, error)
+	Push(project *types.Project, options api.PushOptions) error
+	Remove(project *types.Project, options api.RemoveOptions) error
+	Restart(project *types.Project, options api.RestartOptions) error
 	Run(project *types.Project, options api.RunOptions) (int, error)
-	Start(project *types.Project, options api.StartOptions) (io.ReadCloser, error)
-	Stop(project *types.Project, options api.StopOptions) (io.ReadCloser, error)
+	Start(project *types.Project, options api.StartOptions) error
+	Stop(project *types.Project, options api.StopOptions) error
 	Top(projectName string, services []string) ([]api.ContainerProcSummary, error)
-	Unpause(projectName string, options api.PauseOptions) (io.WriteCloser, error)
-	Up(project *types.Project, options api.UpOptions) (io.ReadCloser, error)
+	Unpause(projectName string, options api.PauseOptions) error
+	Up(project *types.Project, options api.UpOptions) error
 }
 
 type composeService struct {

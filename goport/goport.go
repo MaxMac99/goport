@@ -2,7 +2,6 @@ package goport
 
 import (
 	"io"
-	"log"
 	"sync"
 
 	"github.com/docker/cli/cli/command"
@@ -13,6 +12,8 @@ import (
 	"github.com/docker/cli/cli/streams"
 	"github.com/moby/term"
 )
+
+const Version = "v1"
 
 var once sync.Once
 
@@ -88,6 +89,5 @@ func GetGoPort() *GoPortServer {
 		}
 	})
 
-	log.Printf("Config File: " + goPort.ConfigFile().Filename)
 	return goPort
 }

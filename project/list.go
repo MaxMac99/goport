@@ -37,7 +37,7 @@ func GetStacks() ([]Stack, error) {
 }
 
 func (s *composeService) GetActiveStacks(opts api.ListOptions) ([]Stack, error) {
-	service := getComposeService(s.apiClient, newBufferedFile())
+	service := getComposeService(s.apiClient, newEmptyStream())
 	stacks, err := service.List(s.ctx, opts)
 	if err != nil {
 		return nil, err

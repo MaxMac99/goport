@@ -37,10 +37,26 @@ func BuildPruneHandler(c *gin.Context) {
 	}
 }
 
+// BuildCancel - Cancel Build
+func BuildCancelHandler(c *gin.Context) {
+	var opts models.BuildCancelOpts
+	if err := c.ShouldBind(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
+	err := impl.BuildCancel(c, &opts)
+	if err != nil {
+		code := errdefs.GetHTTPErrorStatusCode(err)
+		c.JSON(code, err.Error())
+		return
+	}
+	c.JSON(204, gin.H{})
+}
+
 // ImageBuild - Build an image
 func ImageBuildHandler(c *gin.Context) {
 	var opts models.ImageBuildOpts
-	if err := c.ShouldBind(&opts); err != nil {
+	if err := c.ShouldBindQuery(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
@@ -54,6 +70,8 @@ func ImageBuildHandler(c *gin.Context) {
 		c.JSON(200, gin.H{})
 		return
 	} else {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(stream)
 		return
 	}
@@ -62,6 +80,10 @@ func ImageBuildHandler(c *gin.Context) {
 // ImageCommit - Create a new image from a container
 func ImageCommitHandler(c *gin.Context) {
 	var opts models.ImageCommitOpts
+	if err := c.ShouldBindQuery(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -81,11 +103,11 @@ func ImageCommitHandler(c *gin.Context) {
 // ImageCreate - Create an image
 func ImageCreateHandler(c *gin.Context) {
 	var opts models.ImageCreateOpts
-	if err := c.ShouldBind(&opts); err != nil {
+	if err := c.ShouldBindHeader(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
-	if err := c.ShouldBindHeader(&opts); err != nil {
+	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
@@ -101,6 +123,8 @@ func ImageCreateHandler(c *gin.Context) {
 		c.JSON(200, gin.H{})
 		return
 	} else {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(stream)
 		return
 	}
@@ -109,6 +133,10 @@ func ImageCreateHandler(c *gin.Context) {
 // ImageDelete - Remove an image
 func ImageDeleteHandler(c *gin.Context) {
 	var opts models.ImageDeleteOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -128,6 +156,10 @@ func ImageDeleteHandler(c *gin.Context) {
 // ImageHistory - Get the history of an image
 func ImageHistoryHandler(c *gin.Context) {
 	var opts models.ImageHistoryOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -147,6 +179,10 @@ func ImageHistoryHandler(c *gin.Context) {
 // ImageInspect - Inspect an image
 func ImageInspectHandler(c *gin.Context) {
 	var opts models.ImageInspectOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
@@ -201,6 +237,8 @@ func ImageLoadHandler(c *gin.Context) {
 		c.JSON(200, gin.H{})
 		return
 	} else {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(stream)
 		return
 	}
@@ -228,11 +266,15 @@ func ImagePruneHandler(c *gin.Context) {
 // ImagePush - Push an image
 func ImagePushHandler(c *gin.Context) {
 	var opts models.ImagePushOpts
-	if err := c.ShouldBind(&opts); err != nil {
+	if err := c.ShouldBindUri(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
 	if err := c.ShouldBindHeader(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
+	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
@@ -248,6 +290,8 @@ func ImagePushHandler(c *gin.Context) {
 		c.JSON(200, gin.H{})
 		return
 	} else {
+		c.Header("Content-Type", "application/json")
+		c.Writer.Flush()
 		c.Stream(stream)
 		return
 	}
@@ -256,11 +300,11 @@ func ImagePushHandler(c *gin.Context) {
 // ImageSearch - Search images
 func ImageSearchHandler(c *gin.Context) {
 	var opts models.ImageSearchOpts
-	if err := c.ShouldBind(&opts); err != nil {
+	if err := c.ShouldBindHeader(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
-	if err := c.ShouldBindHeader(&opts); err != nil {
+	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return
 	}
@@ -279,6 +323,10 @@ func ImageSearchHandler(c *gin.Context) {
 // ImageTag - Tag an image
 func ImageTagHandler(c *gin.Context) {
 	var opts models.ImageTagOpts
+	if err := c.ShouldBindUri(&opts); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
+		return
+	}
 	if err := c.ShouldBind(&opts); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: err.Error()})
 		return

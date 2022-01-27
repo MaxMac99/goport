@@ -363,6 +363,460 @@ func MapContainerUpdateConfigFromOptions(opts ContainerUpdateOpts) containertype
 	}
 }
 
+func MapToContainerInspectResponse(container types.ContainerJSON) ContainerInspectResponse {
+	return ContainerInspectResponse{
+		Id:              container.ID,
+		Created:         container.Created,
+		Path:            container.Path,
+		Args:            container.Args,
+		State:           MapToContainerState(container.State),
+		Image:           container.Image,
+		ResolvConfPath:  container.ResolvConfPath,
+		HostnamePath:    container.HostnamePath,
+		HostsPath:       container.HostsPath,
+		LogPath:         container.LogPath,
+		Name:            container.Name,
+		RestartCount:    container.RestartCount,
+		Driver:          container.Driver,
+		Platform:        container.Platform,
+		MountLabel:      container.MountLabel,
+		ProcessLabel:    container.ProcessLabel,
+		AppArmorProfile: container.AppArmorProfile,
+		ExecIDs:         container.ExecIDs,
+		HostConfig:      MapToHostConfig(container.HostConfig),
+		GraphDriver: GraphDriverData{
+			Name: container.GraphDriver.Name,
+			Data: container.GraphDriver.Data,
+		},
+		SizeRw:          container.SizeRw,
+		SizeRootFs:      container.SizeRootFs,
+		Mounts:          MapToMountPoint(container.Mounts),
+		Config:          MapToContainerConfig(container.Config),
+		NetworkSettings: MapToNetworkSettings(container.NetworkSettings),
+	}
+}
+
+func MapToContainerState(state *types.ContainerState) *ContainerState {
+	if state == nil {
+		return nil
+	}
+	return &ContainerState{
+		Status:     state.Status,
+		Running:    state.Running,
+		Paused:     state.Paused,
+		Restarting: state.Restarting,
+		OOMKilled:  state.OOMKilled,
+		Dead:       state.Dead,
+		Pid:        state.Pid,
+		ExitCode:   state.ExitCode,
+		Error:      state.Error,
+		StartedAt:  state.StartedAt,
+		FinishedAt: state.FinishedAt,
+		Health:     MapToHealth(state.Health),
+	}
+}
+
+func MapToHealth(health *types.Health) *Health {
+	if health == nil {
+		return nil
+	}
+	containerHealthLogs := make([]HealthcheckResult, 0)
+	for _, log := range health.Log {
+		containerHealthLogs = append(containerHealthLogs, HealthcheckResult{
+			Start:    log.Start,
+			End:      log.End,
+			ExitCode: log.ExitCode,
+			Output:   log.Output,
+		})
+	}
+	return &Health{
+		Status:        HealthStatus(health.Status),
+		FailingStreak: health.FailingStreak,
+		Log:           containerHealthLogs,
+	}
+}
+
+func MapToNetworkSettings(config *types.NetworkSettings) *NetworkSettings {
+	if config == nil {
+		return nil
+	}
+	return &NetworkSettings{
+		Bridge:                 config.Bridge,
+		SandboxID:              config.SandboxID,
+		HairpinMode:            config.HairpinMode,
+		LinkLocalIPv6Address:   config.LinkLocalIPv6Address,
+		LinkLocalIPv6PrefixLen: config.LinkLocalIPv6PrefixLen,
+		Ports:                  MapToPortBindings(config.Ports),
+		SandboxKey:             config.SandboxKey,
+		SecondaryIPAddresses:   MapToAddress(config.SecondaryIPAddresses),
+		SecondaryIPv6Addresses: MapToAddress(config.SecondaryIPv6Addresses),
+		EndpointID:             config.EndpointID,
+		Gateway:                config.Gateway,
+		GlobalIPv6Address:      config.GlobalIPv6Address,
+		GlobalIPv6PrefixLen:    config.GlobalIPv6PrefixLen,
+		IPAddress:              config.IPAddress,
+		IPPrefixLen:            config.IPPrefixLen,
+		IPv6Gateway:            config.IPv6Gateway,
+		MacAddress:             config.MacAddress,
+		Networks:               MapToEndpointSettings(config.Networks),
+	}
+}
+
+func MapToEndpointSettings(config map[string]*network.EndpointSettings) map[string]EndpointSettings {
+	if config == nil {
+		return nil
+	}
+	response := make(map[string]EndpointSettings)
+	for key, value := range config {
+		if value == nil {
+			continue
+		}
+		response[key] = EndpointSettings{
+			IPAMConfig:          MapToIPAMConfig(value.IPAMConfig),
+			Links:               value.Links,
+			Aliases:             value.Aliases,
+			NetworkID:           value.NetworkID,
+			EndpointID:          value.EndpointID,
+			Gateway:             value.Gateway,
+			IPAddress:           value.IPAddress,
+			IPPrefixLen:         value.IPPrefixLen,
+			IPv6Gateway:         value.IPv6Gateway,
+			GlobalIPv6Address:   value.GlobalIPv6Address,
+			GlobalIPv6PrefixLen: value.GlobalIPv6PrefixLen,
+			MacAddress:          value.MacAddress,
+			DriverOpts:          value.DriverOpts,
+		}
+	}
+	return response
+}
+
+func MapToIPAMConfig(config *network.EndpointIPAMConfig) *EndpointIpamConfig {
+	if config == nil {
+		return nil
+	}
+	return &EndpointIpamConfig{
+		IPv4Address:  config.IPv4Address,
+		IPv6Address:  config.IPv6Address,
+		LinkLocalIPs: config.LinkLocalIPs,
+	}
+}
+
+func MapToAddress(address []network.Address) []Address {
+	response := make([]Address, 0)
+	for _, item := range address {
+		response = append(response, Address{
+			Addr:      item.Addr,
+			PrefixLen: item.PrefixLen,
+		})
+	}
+	return response
+}
+
+func MapToContainerConfig(config *containertypes.Config) *ContainerConfig {
+	if config == nil {
+		return nil
+	}
+	return &ContainerConfig{
+		Hostname:        config.Hostname,
+		Domainname:      config.Domainname,
+		User:            config.User,
+		AttachStdin:     config.AttachStdin,
+		AttachStdout:    config.AttachStdout,
+		AttachStderr:    config.AttachStderr,
+		ExposedPorts:    MapToExposedPorts(config.ExposedPorts),
+		Tty:             config.Tty,
+		OpenStdin:       config.OpenStdin,
+		StdinOnce:       config.StdinOnce,
+		Env:             config.Env,
+		Cmd:             config.Cmd,
+		Healthcheck:     MapToHealthConfig(config.Healthcheck),
+		ArgsEscaped:     config.ArgsEscaped,
+		Image:           config.Image,
+		Volumes:         MapToVolumes(config.Volumes),
+		WorkingDir:      config.WorkingDir,
+		Entrypoint:      config.Entrypoint,
+		NetworkDisabled: config.NetworkDisabled,
+		MacAddress:      config.MacAddress,
+		OnBuild:         config.OnBuild,
+		Labels:          config.Labels,
+		StopSignal:      config.StopSignal,
+		StopTimeout:     config.StopTimeout,
+		Shell:           config.Shell,
+	}
+}
+
+func MapToHealthConfig(config *containertypes.HealthConfig) *HealthConfig {
+	if config == nil {
+		return nil
+	}
+	return &HealthConfig{
+		Test:        config.Test,
+		Interval:    int64(config.Interval),
+		Timeout:     int64(config.Timeout),
+		Retries:     config.Retries,
+		StartPeriod: int64(config.StartPeriod),
+	}
+}
+
+func MapToVolumes(volumes map[string]struct{}) map[string]interface{} {
+	response := make(map[string]interface{})
+	for key, values := range volumes {
+		response[key] = values
+	}
+	return response
+}
+
+func MapToExposedPorts(ports nat.PortSet) map[string]interface{} {
+	response := make(map[string]interface{})
+	for port, values := range ports {
+		response[string(port)] = values
+	}
+	return response
+}
+
+func MapToMountPoint(config []types.MountPoint) []MountPoint {
+	response := make([]MountPoint, 0)
+	for _, item := range config {
+		response = append(response, MountPoint{
+			Type:        string(item.Type),
+			Name:        item.Name,
+			Source:      item.Source,
+			Destination: item.Destination,
+			Driver:      item.Driver,
+			Mode:        item.Mode,
+			RW:          item.RW,
+			Propagation: string(item.Propagation),
+		})
+	}
+	return response
+}
+
+func MapToHostConfig(config *containertypes.HostConfig) *HostConfig {
+	if config == nil {
+		return nil
+	}
+	return &HostConfig{
+		CpuShares:            config.CPUShares,
+		Memory:               config.Memory,
+		CgroupParent:         config.CgroupParent,
+		BlkioWeight:          config.BlkioWeight,
+		BlkioWeightDevice:    MapToResourcesBlkioWeightDevice(config.BlkioWeightDevice),
+		BlkioDeviceReadBps:   MapToThrottleDevice(config.BlkioDeviceReadBps),
+		BlkioDeviceWriteBps:  MapToThrottleDevice(config.BlkioDeviceWriteBps),
+		BlkioDeviceReadIOps:  MapToThrottleDevice(config.BlkioDeviceReadIOps),
+		BlkioDeviceWriteIOps: MapToThrottleDevice(config.BlkioDeviceWriteIOps),
+		CpuPeriod:            config.CPUPeriod,
+		CpuQuota:             config.CPUQuota,
+		CpuRealtimePeriod:    config.CPURealtimePeriod,
+		CpuRealtimeRuntime:   config.CPURealtimeRuntime,
+		CpusetCpus:           config.CpusetCpus,
+		CpusetMems:           config.CpusetMems,
+		Devices:              MapToDeviceMappings(config.Devices),
+		DeviceCgroupRules:    config.DeviceCgroupRules,
+		DeviceRequests:       MapToDeviceRequest(config.DeviceRequests),
+		KernelMemory:         config.KernelMemory,
+		KernelMemoryTCP:      config.KernelMemoryTCP,
+		MemoryReservation:    config.MemoryReservation,
+		MemorySwap:           config.MemorySwap,
+		MemorySwappiness:     config.MemorySwappiness,
+		NanoCpus:             config.NanoCPUs,
+		OomKillDisable:       config.OomKillDisable,
+		Init:                 config.Init,
+		PidsLimit:            config.PidsLimit,
+		Ulimits:              MapToResourcesUlimits(config.Ulimits),
+		CpuCount:             config.CPUCount,
+		CpuPercent:           config.CPUPercent,
+		IOMaximumIOps:        config.IOMaximumIOps,
+		IOMaximumBandwidth:   config.IOMaximumBandwidth,
+		Binds:                config.Binds,
+		ContainerIDFile:      config.ContainerIDFile,
+		LogConfig: HostConfigAllOfLogConfig{
+			Type:   config.LogConfig.Type,
+			Config: config.LogConfig.Config,
+		},
+		NetworkMode:  string(config.NetworkMode),
+		PortBindings: MapToPortBindings(config.PortBindings),
+		RestartPolicy: RestartPolicy{
+			Name:              config.RestartPolicy.Name,
+			MaximumRetryCount: config.RestartPolicy.MaximumRetryCount,
+		},
+		AutoRemove:      config.AutoRemove,
+		VolumeDriver:    config.VolumeDriver,
+		VolumesFrom:     config.VolumesFrom,
+		Mounts:          MapToMound(config.Mounts),
+		CapAdd:          config.CapAdd,
+		CapDrop:         config.CapDrop,
+		CgroupnsMode:    string(config.CgroupnsMode),
+		Dns:             config.DNS,
+		DnsOptions:      config.DNSOptions,
+		DnsSearch:       config.DNSSearch,
+		ExtraHosts:      config.ExtraHosts,
+		GroupAdd:        config.GroupAdd,
+		IpcMode:         string(config.IpcMode),
+		Cgroup:          string(config.Cgroup),
+		Links:           config.Links,
+		OomScoreAdj:     config.OomScoreAdj,
+		PidMode:         string(config.PidMode),
+		Privileged:      config.Privileged,
+		PublishAllPorts: config.PublishAllPorts,
+		ReadonlyRootfs:  config.ReadonlyRootfs,
+		SecurityOpt:     config.SecurityOpt,
+		StorageOpt:      config.StorageOpt,
+		Tmpfs:           config.Tmpfs,
+		UTSMode:         string(config.UTSMode),
+		UsernsMode:      string(config.UsernsMode),
+		ShmSize:         config.ShmSize,
+		Sysctls:         config.Sysctls,
+		Runtime:         config.Runtime,
+		ConsoleSize:     config.ConsoleSize[:],
+		Isolation:       string(config.Isolation),
+		MaskedPaths:     config.MaskedPaths,
+		ReadonlyPaths:   config.ReadonlyPaths,
+	}
+}
+
+func MapToMound(devices []mount.Mount) []Mount {
+	response := make([]Mount, 0)
+	for _, item := range devices {
+		response = append(response, Mount{
+			Target:        item.Target,
+			Source:        item.Source,
+			Type:          string(item.Type),
+			ReadOnly:      item.ReadOnly,
+			Consistency:   string(item.Consistency),
+			BindOptions:   MapToBindOptions(item.BindOptions),
+			VolumeOptions: MapToMountVolumeOptions(item.VolumeOptions),
+			TmpfsOptions:  MapToMountTmpfsOptions(item.TmpfsOptions),
+		})
+	}
+	return response
+}
+
+func MapToMountTmpfsOptions(item *mount.TmpfsOptions) *MountTmpfsOptions {
+	if item == nil {
+		return nil
+	}
+	return &MountTmpfsOptions{
+		SizeBytes: item.SizeBytes,
+		Mode:      uint32(item.Mode),
+	}
+}
+
+func MapToBindOptions(item *mount.BindOptions) *MountBindOptions {
+	if item == nil {
+		return nil
+	}
+	return &MountBindOptions{
+		Propagation:  string(item.Propagation),
+		NonRecursive: item.NonRecursive,
+	}
+}
+
+func MapToMountVolumeOptions(item *mount.VolumeOptions) *MountVolumeOptions {
+	if item == nil {
+		return nil
+	}
+	return &MountVolumeOptions{
+		NoCopy:       item.NoCopy,
+		Labels:       item.Labels,
+		DriverConfig: MapToMountVolumeOptionsDriverConfig(item.DriverConfig),
+	}
+}
+
+func MapToMountVolumeOptionsDriverConfig(item *mount.Driver) *MountVolumeOptionsDriverConfig {
+	if item == nil {
+		return nil
+	}
+	return &MountVolumeOptionsDriverConfig{
+		Name:    item.Name,
+		Options: item.Options,
+	}
+}
+
+func MapToPortBindings(maps nat.PortMap) map[string][]PortBinding {
+	response := make(map[string][]PortBinding)
+	for key, item := range maps {
+		bindings := make([]PortBinding, 0)
+		for _, binding := range item {
+			bindings = append(bindings, PortBinding{
+				HostIp:   binding.HostIP,
+				HostPort: binding.HostPort,
+			})
+		}
+		response[string(key)] = bindings
+	}
+	return response
+}
+
+func MapToResourcesUlimits(devices []*units.Ulimit) []ResourcesUlimits {
+	response := make([]ResourcesUlimits, 0)
+	for _, item := range devices {
+		if item == nil {
+			continue
+		}
+		response = append(response, ResourcesUlimits{
+			Name: item.Name,
+			Soft: item.Soft,
+			Hard: item.Hard,
+		})
+	}
+	return response
+}
+
+func MapToDeviceRequest(devices []containertypes.DeviceRequest) []DeviceRequest {
+	response := make([]DeviceRequest, 0)
+	for _, item := range devices {
+		response = append(response, DeviceRequest{
+			Driver:       item.Driver,
+			Count:        item.Count,
+			DeviceIDs:    item.DeviceIDs,
+			Capabilities: item.Capabilities,
+			Options:      item.Options,
+		})
+	}
+	return response
+}
+
+func MapToDeviceMappings(devices []containertypes.DeviceMapping) []DeviceMapping {
+	response := make([]DeviceMapping, 0)
+	for _, item := range devices {
+		response = append(response, DeviceMapping{
+			PathOnHost:        item.PathOnHost,
+			PathInContainer:   item.PathInContainer,
+			CgroupPermissions: item.CgroupPermissions,
+		})
+	}
+	return response
+}
+
+func MapToResourcesBlkioWeightDevice(resources []*blkiodev.WeightDevice) []ResourcesBlkioWeightDevice {
+	response := make([]ResourcesBlkioWeightDevice, 0)
+	for _, item := range resources {
+		if item == nil {
+			continue
+		}
+		response = append(response, ResourcesBlkioWeightDevice{
+			Path:   item.Path,
+			Weight: item.Weight,
+		})
+	}
+	return response
+}
+
+func MapToThrottleDevice(devices []*blkiodev.ThrottleDevice) []ThrottleDevice {
+	response := make([]ThrottleDevice, 0)
+	for _, item := range devices {
+		if item == nil {
+			continue
+		}
+		response = append(response, ThrottleDevice{
+			Path: item.Path,
+			Rate: item.Rate,
+		})
+	}
+	return response
+}
+
 func MapToContainerSummary(container types.Container) ContainerSummary {
 	var ports []Port
 	for _, port := range container.Ports {
@@ -499,8 +953,12 @@ func MapImageCommitFromOptions(opts ImageCommitOpts) types.ContainerCommitOption
 	for key := range opts.Volumes {
 		volumes[key] = struct{}{}
 	}
+	reference := opts.Repo
+	if opts.Tag != "" {
+		reference += ":" + opts.Tag
+	}
 	return types.ContainerCommitOptions{
-		Reference: "",
+		Reference: reference,
 		Comment:   opts.Comment,
 		Author:    opts.Author,
 		Changes:   opts.Changes,

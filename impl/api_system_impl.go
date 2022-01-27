@@ -14,18 +14,20 @@ import (
 	"io"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
-	"gitlab.com/maxmac99/goport/controllers"
+	"gitlab.com/maxmac99/goport/context"
+	"gitlab.com/maxmac99/goport/goport"
 	"gitlab.com/maxmac99/goport/models"
 )
 
 // SystemDataUsage - Get data usage information
 func SystemDataUsage(c *gin.Context, opts *models.SystemDataUsageOpts) (*map[string]types.DiskUsage, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context, client.WithTimeout(2*time.Second))
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +54,7 @@ func SystemDataUsage(c *gin.Context, opts *models.SystemDataUsageOpts) (*map[str
 
 // SystemEvents - Monitor events
 func SystemEvents(c *gin.Context, opts *models.SystemEventsOpts) (func(w io.Writer) bool, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +92,7 @@ func SystemEvents(c *gin.Context, opts *models.SystemEventsOpts) (func(w io.Writ
 					}
 					output <- map[string]models.SystemEventsResponse{
 						context: {
-							ErrorMessage: models.ErrorResponse{
+							ErrorMessage: &models.ErrorResponse{
 								Message: errI.Error(),
 							},
 						},
@@ -116,6 +118,7 @@ func SystemEvents(c *gin.Context, opts *models.SystemEventsOpts) (func(w io.Writ
 			close(output)
 			return false
 		}
+		response = append(response, '\n')
 		w.Write(response)
 		return true
 	}, nil
@@ -123,7 +126,7 @@ func SystemEvents(c *gin.Context, opts *models.SystemEventsOpts) (func(w io.Writ
 
 // SystemInfo - Get system information
 func SystemInfo(c *gin.Context, opts *models.SystemInfoOpts) (*map[string]types.Info, error) {
-	clients, err := controllers.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context, client.WithTimeout(2*time.Second))
 	if err != nil {
 		return nil, err
 	}
@@ -149,44 +152,73 @@ func SystemInfo(c *gin.Context, opts *models.SystemInfoOpts) (*map[string]types.
 }
 
 // SystemPing - Ping
-func SystemPing(c *gin.Context, opts *models.SystemPingOpts) (*string, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+type SystemPingResponseItem struct {
+	APIVersion     string `json:"ApiVersion,omitempty"`
+	BuilderVersion string `json:"BuilderVersion,omitempty"`
+	Experimental   bool   `json:"Experimental,omitempty"`
+	OSType         string `json:"OSType,omitempty"`
+	Error          string `json:"Error,omitempty"`
+}
+
+func SystemPing(c *gin.Context, opts *models.SystemPingOpts) (map[string]SystemPingResponseItem, error) {
+	clients, err := context.ResolveContexts(opts.Context, client.WithTimeout(2*time.Second))
 	if err != nil {
 		return nil, err
 	}
-	response, err := client.Ping(c)
-	if err != nil {
-		return nil, err
+
+	output := make(map[string]SystemPingResponseItem, len(clients))
+	var mutex sync.RWMutex
+	var wg sync.WaitGroup
+	wg.Add(len(clients))
+	for context, cli := range clients {
+		go func(context string, cli client.APIClient) {
+			response, err := cli.Ping(c)
+			if err != nil {
+				mutex.Lock()
+				output[context] = SystemPingResponseItem{
+					Error: err.Error(),
+				}
+				mutex.Unlock()
+				wg.Done()
+				return
+			}
+			mutex.Lock()
+			output[context] = SystemPingResponseItem{
+				APIVersion:     response.APIVersion,
+				BuilderVersion: string(response.BuilderVersion),
+				Experimental:   response.Experimental,
+				OSType:         response.OSType,
+			}
+			mutex.Unlock()
+			wg.Done()
+		}(context, cli)
 	}
-	c.Header("API-Version", response.APIVersion)
-	c.Header("Builder-Version", string(response.BuilderVersion))
-	c.Header("Docker-Experimental", strconv.FormatBool(response.Experimental))
-	c.Header("OSType", response.OSType)
-	ok := "OK"
-	return &ok, nil
+	c.Header("GoPort-Version", goport.Version)
+	wg.Wait()
+	return output, nil
 }
 
 // SystemPingHead - Ping
-func SystemPingHead(c *gin.Context, opts *models.SystemPingHeadOpts) (*string, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+func SystemPingHead(c *gin.Context, opts *models.SystemPingHeadOpts) error {
+	client, err := context.ResolveContext(opts.Context, client.WithTimeout(2*time.Second))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	response, err := client.Ping(c)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	c.Header("API-Version", response.APIVersion)
 	c.Header("Builder-Version", string(response.BuilderVersion))
 	c.Header("Docker-Experimental", strconv.FormatBool(response.Experimental))
 	c.Header("OSType", response.OSType)
-	ok := "OK"
-	return &ok, nil
+	c.Header("Goport-Version", goport.Version)
+	return nil
 }
 
 // SystemVersion - Get version
 func SystemVersion(c *gin.Context, opts *models.SystemVersionOpts) (*types.Version, error) {
-	client, err := controllers.ResolveContext(opts.Context)
+	client, err := context.ResolveContext(opts.Context, client.WithTimeout(2*time.Second))
 	if err != nil {
 		return nil, err
 	}
