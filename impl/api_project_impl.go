@@ -271,53 +271,60 @@ func ProjectKill(c *gin.Context, opts *models.ProjectKillOpts) error {
 
 // ProjectList - List projects
 func ProjectList(c *gin.Context, opts *models.ProjectListOpts) (map[string][]project.Stack, error) {
+	isOnlyLocal := len(opts.Context) == 0
 	isLocal := len(opts.Context) == 0
 	contexts := opts.Context
 	for _, context := range opts.Context {
-		if context == "local" {
+		if context == "goport" {
 			isLocal = true
 		} else {
 			contexts = append(contexts, context)
 		}
 	}
-	clients, err := context.ResolveContexts(contexts)
-	if err != nil {
-		return nil, err
+	var clients map[string]client.APIClient
+	numObjects := 0
+	if !isOnlyLocal {
+		clients, err := context.ResolveContexts(contexts)
+		if err != nil {
+			return nil, err
+		}
+		numObjects = len(clients)
 	}
-	numObjects := len(clients)
 	if isLocal {
 		numObjects += 1
 	}
-	output := make(map[string][]project.Stack, len(clients))
+	output := make(map[string][]project.Stack, numObjects)
 
 	if isLocal {
 		stacks, err := project.GetStacks()
 		if err != nil {
 			return nil, err
 		}
-		output["local"] = stacks
+		output["goport"] = stacks
 	}
 
-	var mutex sync.RWMutex
-	var wg sync.WaitGroup
-	wg.Add(len(clients))
-	for context, cli := range clients {
-		go func(context string, cli client.APIClient) {
-			service := project.GetProjectService(cli, c)
-			stacks, err := service.GetActiveStacks(api.ListOptions{
-				All: opts.All,
-			})
-			if err != nil {
+	if !isOnlyLocal {
+		var mutex sync.RWMutex
+		var wg sync.WaitGroup
+		wg.Add(len(clients))
+		for context, cli := range clients {
+			go func(context string, cli client.APIClient) {
+				service := project.GetProjectService(cli, c)
+				stacks, err := service.GetActiveStacks(api.ListOptions{
+					All: opts.All,
+				})
+				if err != nil {
+					wg.Done()
+					return
+				}
+				mutex.Lock()
+				output[context] = stacks
+				mutex.Unlock()
 				wg.Done()
-				return
-			}
-			mutex.Lock()
-			output[context] = stacks
-			mutex.Unlock()
-			wg.Done()
-		}(context, cli)
+			}(context, cli)
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 	return output, nil
 }
 

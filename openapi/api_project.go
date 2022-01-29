@@ -386,10 +386,13 @@ func ProjectRunHandler(c *gin.Context) {
 				"error": err.Error(),
 			})
 		} else {
-			c.JSON(errCode, gin.H{
-				"output": response,
-				"error":  err.Error(),
-			})
+			content := gin.H{
+				"error": err.Error(),
+			}
+			for key, value := range response {
+				content[key] = value
+			}
+			c.JSON(errCode, content)
 		}
 		return
 	}
@@ -399,9 +402,11 @@ func ProjectRunHandler(c *gin.Context) {
 		c.Stream(responseStream)
 		return
 	}
-	c.JSON(200, gin.H{
-		"output": response,
-	})
+	content := gin.H{}
+	for key, value := range response {
+		content[key] = value
+	}
+	c.JSON(200, content)
 }
 
 // ProjectStart - Starts existing containers for a service.
