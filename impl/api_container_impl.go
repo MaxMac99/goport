@@ -119,7 +119,7 @@ func ContainerKill(c *gin.Context, opts *models.ContainerKillOpts) error {
 
 // ContainerList - List containers
 func ContainerList(c *gin.Context, opts *models.ContainerListOpts) (*map[string][]models.ContainerSummary, error) {
-	clients, err := context.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context, client.WithTimeout(5*time.Second))
 	if err != nil {
 		return nil, err
 	}

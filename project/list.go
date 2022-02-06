@@ -42,7 +42,7 @@ func (s *composeService) GetActiveStacks(opts api.ListOptions) ([]Stack, error) 
 	if err != nil {
 		return nil, err
 	}
-	var remoteStacks []Stack
+	remoteStacks := make([]Stack, 0)
 	for _, stack := range stacks {
 		remoteStacks = append(remoteStacks, Stack{
 			Id:     stack.ID,

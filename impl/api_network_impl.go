@@ -11,6 +11,7 @@ package impl
 
 import (
 	"sync"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -137,7 +138,7 @@ func NetworkInspect(c *gin.Context, opts *models.NetworkInspectOpts) (*types.Net
 
 // NetworkList - List networks
 func NetworkList(c *gin.Context, opts *models.NetworkListOpts) (*map[string][]models.Network, error) {
-	clients, err := context.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context, client.WithTimeout(5*time.Second))
 	if err != nil {
 		return nil, err
 	}

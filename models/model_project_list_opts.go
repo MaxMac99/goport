@@ -12,4 +12,5 @@ package models
 type ProjectListOpts struct {
 	Context []string `form:"context"`
 	All     bool     `form:"all,default=false"`
+	Stored  bool     `form:"stored,default=true"`
 }

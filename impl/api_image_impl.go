@@ -12,6 +12,7 @@ package impl
 import (
 	"io"
 	"sync"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -270,7 +271,7 @@ func ImageLoad(c *gin.Context, opts *models.ImageLoadOpts) (func(w io.Writer) bo
 
 // ImagePrune - Delete unused images
 func ImagePrune(c *gin.Context, opts *models.ImagePruneOpts) (*map[string]models.ImagePruneResponseItem, error) {
-	clients, err := context.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context, client.WithTimeout(5*time.Second))
 	if err != nil {
 		return nil, err
 	}

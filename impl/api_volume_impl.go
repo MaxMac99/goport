@@ -11,6 +11,7 @@ package impl
 
 import (
 	"sync"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -65,7 +66,7 @@ func VolumeInspect(c *gin.Context, opts *models.VolumeInspectOpts) (*models.Volu
 
 // VolumeList - List volumes
 func VolumeList(c *gin.Context, opts *models.VolumeListOpts) (*map[string]models.VolumeListResponse, error) {
-	clients, err := context.ResolveContexts(opts.Context)
+	clients, err := context.ResolveContexts(opts.Context, client.WithTimeout(5*time.Second))
 	if err != nil {
 		return nil, err
 	}
