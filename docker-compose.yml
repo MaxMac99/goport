@@ -6,9 +6,25 @@ services:
     image: goport:latest
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "/home/pi/.docker/contexts:/.docker/contexts"
-      - "/home/pi/compose:/home/pi/compose"
+      - "~/.docker/contexts:/.docker/contexts"
+      - "/compose:/compose"
     environment:
-      - GOPORT_PROJECTS_BASE_DIR=/home/pi/compose
+      - GOPORT_PROJECTS_BASE_DIR=/compose
     ports: 
       - 9212:9212
+    networks:
+      - apns
+      - db
+  db:
+    image: mongo:latest
+    volumes:
+      - "mongodata:/data/db"
+    networks:
+      - db
+volumes:
+  mongodata:
+networks:
+  apns:
+    name: apns
+  db:
+    name: mongodb

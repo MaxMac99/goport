@@ -1,0 +1,39 @@
+version: '3.4'
+services:
+  # Update this to the name of the service you want to work with in your docker-compose.yml file
+  dev:
+    image: mcr.microsoft.com/vscode/devcontainers/go:0-1.17-bullseye
+    volumes:
+      # Update this to wherever you want VS Code to mount the folder of your project
+      - ..:/workspace:cached
+      - .zshrc:/home/vscode/.zshrc:cached
+      - ~/.docker/contexts:/home/vscode/.docker/contexts:cached
+      - ~/.ssh:/home/vscode/.ssh:cached
+      - /var/run/docker.sock:/var/run/docker.sock 
+
+    # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: /bin/sh -c "while sleep 1000; do :; done"
+    networks:
+      - apns
+      - db
+  db:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - "mongodata:/data/db"
+    networks:
+      - db
+volumes:
+  mongodata:
+networks:
+  apns:
+    name: apns
+  db:
+    name: mongodb

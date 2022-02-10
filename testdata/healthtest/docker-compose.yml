@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  server:
+    build: .
+    ports:
+      - "5468:8080"
+      - "5469:8081"
