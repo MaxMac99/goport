@@ -649,4 +649,18 @@ var routes = Routes{
 		"/v1/notifications/:event/:token",
 		events.RegisterNotificationHandler,
 	},
+
+	{
+		"NotificationUnregister",
+		http.MethodDelete,
+		"/v1/notifications/:event/:token",
+		events.UnregisterNotificationHandler,
+	},
+
+	{
+		"NotificationUnregister",
+		http.MethodGet,
+		"/v1/notifications/:event/:token",
+		events.GetNotificationsHandler,
+	},
 }
