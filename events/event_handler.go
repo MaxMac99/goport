@@ -1,7 +1,6 @@
 package events
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/docker/docker/api/types/events"
@@ -9,7 +8,6 @@ import (
 )
 
 func receivedEvent(contextName string, event events.Message) {
-	fmt.Println(contextName + " - " + event.Type + " - " + event.Action + " - " + event.Actor.ID)
 	if event.Action == "destroy" {
 		DeleteNotificationRegistrationForId(event.Actor.ID)
 	}

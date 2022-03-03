@@ -3,7 +3,6 @@ package events
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -285,11 +284,10 @@ func GetDeviceTokensForEvent(contextName string, eventType string, action string
 
 func DeleteNotificationRegistrationForId(id string) error {
 	shortId := id[:12]
-	res, err := collection.DeleteMany(ctx, bson.D{
+	_, err := collection.DeleteMany(ctx, bson.D{
 		primitive.E{Key: "id", Value: bson.D{
 			primitive.E{Key: "$regex", Value: "^" + shortId},
 		}},
 	})
-	fmt.Println("Removed ", res.DeletedCount, " items")
 	return err
 }
