@@ -12,13 +12,13 @@ package main
 import (
 	"log"
 
+	"gitlab.com/maxmac99/goport/events"
 	sw "gitlab.com/maxmac99/goport/openapi"
 )
 
 func main() {
-	log.Printf("Server started")
+	events.Setup()
 
 	router := sw.NewRouter()
-
 	log.Fatal(router.Run(":9212"))
 }

@@ -52,4 +52,6 @@ Temporary Items
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-.token
+.netrc
+events_examples
+helper/helper

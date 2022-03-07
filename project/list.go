@@ -3,7 +3,7 @@ package project
 import (
 	"io/ioutil"
 
-	"gitlab.com/maxmac99/compose/pkg/api"
+	"github.com/docker/compose/v2/pkg/api"
 )
 
 type Stack struct {
@@ -37,7 +37,7 @@ func GetStacks() ([]Stack, error) {
 }
 
 func (s *composeService) GetActiveStacks(opts api.ListOptions) ([]Stack, error) {
-	service := getComposeService(s.apiClient, newEmptyStream())
+	service := getComposeService(s.apiClient)
 	stacks, err := service.List(s.ctx, opts)
 	if err != nil {
 		return nil, err

@@ -13,6 +13,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gitlab.com/maxmac99/goport/events"
 )
 
 // Route is the information for every URI.
@@ -640,5 +641,26 @@ var routes = Routes{
 		http.MethodPost,
 		"/v1/volumes/prune",
 		VolumePruneHandler,
+	},
+
+	{
+		"NotificationRegister",
+		http.MethodPost,
+		"/v1/notifications/:event/:token",
+		events.RegisterNotificationHandler,
+	},
+
+	{
+		"NotificationUnregister",
+		http.MethodDelete,
+		"/v1/notifications/:event/:token",
+		events.UnregisterNotificationHandler,
+	},
+
+	{
+		"NotificationGet",
+		http.MethodGet,
+		"/v1/notifications/:event/:token",
+		events.GetNotificationsHandler,
 	},
 }
