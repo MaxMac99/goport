@@ -9,10 +9,15 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "main.go",
-            "env": {
-                "GOPORT_PROJECTS_BASE_DIR": "/Users/maxvissing/Git/GoPort/testdata"
-            }
-        }
+            "program": "main.go"
+        },
+        {
+            "name": "Pull",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "helper/helper.go",
+            "args": ["build", "test", "default"]
+        },
     ]
 }

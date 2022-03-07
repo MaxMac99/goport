@@ -19,52 +19,22 @@ import (
 	"time"
 
 	"github.com/compose-spec/compose-go/types"
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"gitlab.com/maxmac99/compose/pkg/api"
 	"gitlab.com/maxmac99/goport/context"
+	"gitlab.com/maxmac99/goport/helper/service"
 	"gitlab.com/maxmac99/goport/models"
 	"gitlab.com/maxmac99/goport/project"
 )
 
 // ProjectBuild - Build the project
 func ProjectBuild(c *gin.Context, opts *models.ProjectBuildOpts) (func(w io.Writer) bool, error) {
-	client, err := context.ResolveContext(opts.Context)
-	if err != nil {
-		return nil, err
-	}
-	service := project.GetProjectService(client, c)
-	project, err := project.GetProject(opts.Name)
-	if err != nil {
-		return nil, err
-	}
-	progress := "plain"
-	if opts.Quiet {
-		progress = "quiet"
-	}
-	var args map[string]*string
-	if opts.BuildArgs != "" {
-		err = json.Unmarshal([]byte(opts.BuildArgs), &args)
-		if err != nil {
-			return nil, err
-		}
-	}
-	reader, err := service.Build(project, api.BuildOptions{
-		Pull:     opts.Pull,
-		Progress: progress,
-		Args:     args,
-		NoCache:  opts.NoCache,
-		Quiet:    opts.Quiet,
-		Services: opts.Services,
-	})
-	if err != nil {
-		return nil, err
-	}
+	reader := service.RunBuild(*opts)
 	if opts.Quiet {
 		return nil, nil
 	}
-
 	return StreamResponse(c, reader), nil
 }
 
@@ -516,24 +486,7 @@ func ProjectPs(c *gin.Context, opts *models.ProjectPsOpts) (*[]models.ProjectCon
 
 // ProjectPull - Pulls images associated with a service.
 func ProjectPull(c *gin.Context, opts *models.ProjectPullOpts) (func(w io.Writer) bool, error) {
-	client, err := context.ResolveContext(opts.Context)
-	if err != nil {
-		return nil, err
-	}
-	service := project.GetProjectService(client, c)
-	project, err := project.GetProject(opts.Name)
-	if err != nil && err != os.ErrNotExist {
-		return nil, err
-	} else if err == os.ErrNotExist {
-		err = nil
-	}
-	reader, err := service.Pull(project, api.PullOptions{
-		Quiet:          opts.Quiet,
-		IgnoreFailures: opts.Ignorepullfailures,
-	})
-	if err != nil {
-		return nil, err
-	}
+	reader := service.RunPull(*opts)
 	if opts.Quiet {
 		return nil, nil
 	}

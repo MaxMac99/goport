@@ -1,6 +1,11 @@
 package project
 
-import "github.com/containerd/console"
+import (
+	"encoding/json"
+	"strings"
+
+	"github.com/containerd/console"
+)
 
 type Stream interface {
 	console.File
@@ -8,27 +13,38 @@ type Stream interface {
 }
 
 type streamFile struct {
-	out    chan string
+	title  string
+	out    chan map[string]string
 	closed bool
 }
 
-func newStream() Stream {
+func NewStream(title string, output chan map[string]string) Stream {
 	return &streamFile{
-		out:    make(chan string),
+		title:  title,
+		out:    output,
 		closed: false,
 	}
 }
 
 func (s *streamFile) Wait() (string, bool) {
 	message, ok := <-s.out
-	return message, ok
+	encodedMessage, err := json.Marshal(message)
+	if err != nil {
+		return "", false
+	}
+	rawMessage := string(encodedMessage) + "\n"
+	return rawMessage, ok
 }
 
 func (s *streamFile) Write(p []byte) (n int, err error) {
 	if !s.closed {
 		buffer := make([]byte, len(p))
 		copy(buffer, p)
-		s.out <- string(buffer)
+		messages := string(buffer)
+		for _, message := range strings.Split(messages, "\n") {
+			output := map[string]string{s.title: message + "\n"}
+			s.out <- output
+		}
 	}
 	return len(p), nil
 }
@@ -38,9 +54,6 @@ func (s *streamFile) Read(p []byte) (n int, err error) {
 }
 
 func (s *streamFile) Close() error {
-	if !s.closed {
-		close(s.out)
-	}
 	s.closed = true
 	return nil
 }

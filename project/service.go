@@ -4,16 +4,15 @@ import (
 	"context"
 
 	"github.com/compose-spec/compose-go/types"
-	"github.com/containerd/console"
+	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/compose/v2/pkg/compose"
 	"github.com/docker/docker/client"
-	"gitlab.com/maxmac99/compose/pkg/api"
-	"gitlab.com/maxmac99/compose/pkg/compose"
 	"gitlab.com/maxmac99/goport/goport"
 )
 
 type ProjectService interface {
 	GetContext() context.Context
-	Build(project *types.Project, options api.BuildOptions) (Stream, error)
+	Build(project *types.Project, options api.BuildOptions) error
 	GetActiveStacks(opts api.ListOptions) ([]Stack, error)
 	Convert(project *types.Project, options api.ConvertOptions) ([]byte, error)
 	Down(projectName string, options api.DownOptions) error
@@ -23,7 +22,7 @@ type ProjectService interface {
 	Logs(projectName string, consumer api.LogConsumer, options api.LogOptions) error
 	Pause(projectName string, options api.PauseOptions) error
 	Ps(projectName string, options api.PsOptions) ([]api.ContainerSummary, error)
-	Pull(project *types.Project, options api.PullOptions) (Stream, error)
+	Pull(project *types.Project, options api.PullOptions) error
 	Push(project *types.Project, options api.PushOptions) error
 	Remove(project *types.Project, options api.RemoveOptions) error
 	Restart(project *types.Project, options api.RestartOptions) error
@@ -51,7 +50,7 @@ func GetProjectService(apiClient client.APIClient, ctx context.Context) ProjectS
 	}
 }
 
-func getComposeService(apiClient client.APIClient, writer console.File) api.Service {
+func getComposeService(apiClient client.APIClient) api.Service {
 	server := goport.GetGoPort()
-	return compose.NewComposeService(apiClient, server.ConfigFile(), writer, writer)
+	return compose.NewComposeService(apiClient, server.ConfigFile())
 }
